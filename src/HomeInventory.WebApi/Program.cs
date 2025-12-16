@@ -1,19 +1,36 @@
 using HomeInventory.Application;
 using HomeInventory.Infrastructure;
 using HomeInventory.WebApi.Middleware;
-using Serilog;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/homeinventory-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+// Configure OpenTelemetry
+var serviceName = "HomeInventory.API";
+var serviceVersion = "1.0.0";
 
-builder.Host.UseSerilog();
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+});
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddConsoleExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddConsoleExporter())
+    .WithLogging(logging => logging
+        .AddConsoleExporter());
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -85,16 +102,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-try
-{
-    Log.Information("Starting Home Inventory API");
-    app.Run();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Application failed to start");
-}
-finally
-{
-    Log.CloseAndFlush();
-}
+app.Logger.LogInformation("Starting Home Inventory API");
+app.Run();
