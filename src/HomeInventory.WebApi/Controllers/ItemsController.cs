@@ -10,17 +10,8 @@ namespace HomeInventory.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ItemsController : ControllerBase
+public class ItemsController(IMediator mediator, ILogger<ItemsController> logger) : ControllerBase
 {
-    private readonly IMediator _mediator;
-    private readonly ILogger<ItemsController> _logger;
-
-    public ItemsController(IMediator mediator, ILogger<ItemsController> logger)
-    {
-        _mediator = mediator;
-        _logger = logger;
-    }
-
     /// <summary>
     /// Get all inventory items with pagination
     /// </summary>
@@ -28,10 +19,10 @@ public class ItemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
     {
-        _logger.LogInformation("Fetching items - Page: {PageNumber}, Size: {PageSize}", pageNumber, pageSize);
+        logger.LogInformation("Fetching items - Page: {PageNumber}, Size: {PageSize}", pageNumber, pageSize);
 
         var query = new GetAllItemsQuery(pageNumber, pageSize);
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
 
         return Ok(result);
     }
@@ -44,10 +35,10 @@ public class ItemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        _logger.LogInformation("Fetching item with ID: {ItemId}", id);
+        logger.LogInformation("Fetching item with ID: {ItemId}", id);
 
         var query = new GetItemByIdQuery(id);
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
 
         if (!result.IsSuccess || result.Value == null)
         {
@@ -65,9 +56,9 @@ public class ItemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateItemCommand command)
     {
-        _logger.LogInformation("Creating new item: {ItemName}", command.Name);
+        logger.LogInformation("Creating new item: {ItemName}", command.Name);
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
         {
@@ -91,9 +82,9 @@ public class ItemsController : ControllerBase
             return BadRequest(new { message = "ID in URL does not match ID in request body" });
         }
 
-        _logger.LogInformation("Updating item with ID: {ItemId}", id);
+        logger.LogInformation("Updating item with ID: {ItemId}", id);
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
         {
@@ -115,10 +106,10 @@ public class ItemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        _logger.LogInformation("Deleting item with ID: {ItemId}", id);
+        logger.LogInformation("Deleting item with ID: {ItemId}", id);
 
         var command = new DeleteItemCommand(id);
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
         {

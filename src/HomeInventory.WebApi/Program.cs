@@ -1,36 +1,13 @@
 using HomeInventory.Application;
 using HomeInventory.Infrastructure;
+using HomeInventory.WebApi;
+using HomeInventory.WebApi.Configuration;
 using HomeInventory.WebApi.Middleware;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
+var applicationOptions = builder.Configuration.Get<ApplicationOptions>() ?? throw new InvalidOperationException("");
 
-// Configure OpenTelemetry
-var serviceName = "HomeInventory.API";
-var serviceVersion = "1.0.0";
-
-builder.Logging.AddOpenTelemetry(logging =>
-{
-    logging.IncludeFormattedMessage = true;
-    logging.IncludeScopes = true;
-});
-
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource
-        .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
-    .WithTracing(tracing => tracing
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddConsoleExporter())
-    .WithMetrics(metrics => metrics
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddConsoleExporter())
-    .WithLogging(logging => logging
-        .AddConsoleExporter());
+builder.Services.ConfigureLogging(applicationOptions.OpenTelemetry);
 
 // Add services to the container
 builder.Services.AddControllers();

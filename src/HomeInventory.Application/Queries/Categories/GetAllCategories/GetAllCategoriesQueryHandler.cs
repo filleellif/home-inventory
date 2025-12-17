@@ -1,28 +1,24 @@
-using AutoMapper;
 using HomeInventory.Application.Common;
 using HomeInventory.Application.DTOs;
+using HomeInventory.Application.Mapping;
 using HomeInventory.Domain.Repositories;
 using MediatR;
 
 namespace HomeInventory.Application.Queries.Categories.GetAllCategories;
 
-public class GetAllCategoriesQueryHandler : IRequestHandler<GetAllCategoriesQuery, Result<List<CategoryDto>>>
+public class GetAllCategoriesQueryHandler(ICategoryRepository categoryRepository)
+    : IRequestHandler<GetAllCategoriesQuery, Result<List<CategoryDto>>>
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly IMapper _mapper;
-
-    public GetAllCategoriesQueryHandler(ICategoryRepository categoryRepository, IMapper mapper)
-    {
-        _categoryRepository = categoryRepository;
-        _mapper = mapper;
-    }
-
-    public async Task<Result<List<CategoryDto>>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<CategoryDto>>> Handle(GetAllCategoriesQuery request,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var categories = await _categoryRepository.GetAllAsync(cancellationToken);
-            var categoryDtos = _mapper.Map<List<CategoryDto>>(categories);
+            var categories = await categoryRepository.GetAllAsync(cancellationToken);
+
+            var categoryDtos = categories
+                .Select(c => c.FromDomain())
+                .ToList();
 
             return Result<List<CategoryDto>>.Success(categoryDtos);
         }

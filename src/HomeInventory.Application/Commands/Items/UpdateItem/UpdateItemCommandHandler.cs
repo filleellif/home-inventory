@@ -7,20 +7,14 @@ using MediatR;
 
 namespace HomeInventory.Application.Commands.Items.UpdateItem;
 
-public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Result>
+public class UpdateItemCommandHandler(IInventoryItemRepository itemRepository)
+    : IRequestHandler<UpdateItemCommand, Result>
 {
-    private readonly IInventoryItemRepository _itemRepository;
-
-    public UpdateItemCommandHandler(IInventoryItemRepository itemRepository)
-    {
-        _itemRepository = itemRepository;
-    }
-
     public async Task<Result> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var item = await _itemRepository.GetByIdAsync(ItemId.From(request.Id), cancellationToken);
+            var item = await itemRepository.GetByIdAsync(ItemId.From(request.Id), cancellationToken);
 
             if (item == null)
             {
@@ -32,11 +26,11 @@ public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Resul
             item.UpdateBasicInfo(basicInfo);
 
             // Update financial info
-            Money? purchasePrice = request.PurchasePrice.HasValue
+            var purchasePrice = request.PurchasePrice.HasValue
                 ? Money.Create(request.PurchasePrice.Value, request.PurchaseCurrency ?? "USD")
                 : null;
 
-            Money? currentValue = request.CurrentValue.HasValue
+            var currentValue = request.CurrentValue.HasValue
                 ? Money.Create(request.CurrentValue.Value, request.CurrentValueCurrency ?? "USD")
                 : null;
 
@@ -59,18 +53,15 @@ public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Resul
 
             // Update tags
             item.ClearTags();
-            if (request.Tags != null && request.Tags.Any())
+            if (request.Tags != null && request.Tags.Count != 0)
             {
-                foreach (var tagValue in request.Tags)
+                foreach (var tagValue in request.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
                 {
-                    if (!string.IsNullOrWhiteSpace(tagValue))
-                    {
-                        item.AddTag(Tag.Create(tagValue));
-                    }
+                    item.AddTag(Tag.Create(tagValue));
                 }
             }
 
-            await _itemRepository.UpdateAsync(item, cancellationToken);
+            await itemRepository.UpdateAsync(item, cancellationToken);
 
             return Result.Success();
         }

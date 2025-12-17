@@ -7,15 +7,9 @@ using MediatR;
 
 namespace HomeInventory.Application.Commands.Items.CreateItem;
 
-public class CreateItemCommandHandler : IRequestHandler<CreateItemCommand, Result<Guid>>
+public class CreateItemCommandHandler(IInventoryItemRepository itemRepository)
+    : IRequestHandler<CreateItemCommand, Result<Guid>>
 {
-    private readonly IInventoryItemRepository _itemRepository;
-
-    public CreateItemCommandHandler(IInventoryItemRepository itemRepository)
-    {
-        _itemRepository = itemRepository;
-    }
-
     public async Task<Result<Guid>> Handle(CreateItemCommand request, CancellationToken cancellationToken)
     {
         try
@@ -46,7 +40,7 @@ public class CreateItemCommandHandler : IRequestHandler<CreateItemCommand, Resul
             Location? location = null;
             if (!string.IsNullOrWhiteSpace(request.Room) ||
                 !string.IsNullOrWhiteSpace(request.StorageSpot) ||
-                (request.GpsLatitude.HasValue && request.GpsLongitude.HasValue))
+                request is { GpsLatitude: not null, GpsLongitude: not null })
             {
                 GpsCoordinates? coordinates = null;
                 if (request.GpsLatitude.HasValue && request.GpsLongitude.HasValue)
@@ -58,7 +52,7 @@ public class CreateItemCommandHandler : IRequestHandler<CreateItemCommand, Resul
             }
 
             // Create category reference
-            CategoryId? categoryId = request.CategoryId.HasValue
+            var categoryId = request.CategoryId.HasValue
                 ? CategoryId.From(request.CategoryId.Value)
                 : null;
 
@@ -74,17 +68,14 @@ public class CreateItemCommandHandler : IRequestHandler<CreateItemCommand, Resul
             // Add tags if provided
             if (request.Tags != null && request.Tags.Any())
             {
-                foreach (var tagValue in request.Tags)
+                foreach (var tagValue in request.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
                 {
-                    if (!string.IsNullOrWhiteSpace(tagValue))
-                    {
-                        item.AddTag(Tag.Create(tagValue));
-                    }
+                    item.AddTag(Tag.Create(tagValue));
                 }
             }
 
             // Save to repository
-            await _itemRepository.AddAsync(item, cancellationToken);
+            await itemRepository.AddAsync(item, cancellationToken);
 
             return Result<Guid>.Success(item.Id.Value);
         }

@@ -5,15 +5,9 @@ using MediatR;
 
 namespace HomeInventory.Application.Commands.Categories.CreateCategory;
 
-public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryCommand, Result<Guid>>
+public class CreateCategoryCommandHandler(ICategoryRepository categoryRepository)
+    : IRequestHandler<CreateCategoryCommand, Result<Guid>>
 {
-    private readonly ICategoryRepository _categoryRepository;
-
-    public CreateCategoryCommandHandler(ICategoryRepository categoryRepository)
-    {
-        _categoryRepository = categoryRepository;
-    }
-
     public async Task<Result<Guid>> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
         try
@@ -29,7 +23,7 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
                 parentCategoryId
             );
 
-            await _categoryRepository.AddAsync(category, cancellationToken);
+            await categoryRepository.AddAsync(category, cancellationToken);
 
             return Result<Guid>.Success(category.Id.Value);
         }
