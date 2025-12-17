@@ -1,7 +1,11 @@
+using HomeInventory.Infrastructure.Configuration;
+
 namespace HomeInventory.WebApi.Configuration;
 
 public sealed record ApplicationOptions
 {
+    public required PostgresOptions Postgres { get; init; }
+    
     public required OpenTelemetryOptions OpenTelemetry { get; init; }
 }
 

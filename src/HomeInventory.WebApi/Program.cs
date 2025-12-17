@@ -9,16 +9,10 @@ var applicationOptions = builder.Configuration.Get<ApplicationOptions>() ?? thro
 
 builder.Services.ConfigureLogging(applicationOptions.OpenTelemetry);
 
-// Add services to the container
 builder.Services.AddControllers();
-
-// Register Application layer services (MediatR, AutoMapper, Validation)
 builder.Services.AddApplication();
+builder.Services.AddInfrastructure(applicationOptions.Postgres);
 
-// Register Infrastructure layer services (EF Core, Repositories, File Storage)
-builder.Services.AddInfrastructure(builder.Configuration);
-
-// Configure CORS for frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
