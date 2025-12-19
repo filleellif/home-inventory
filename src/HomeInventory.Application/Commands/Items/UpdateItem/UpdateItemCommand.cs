@@ -1,6 +1,3 @@
-using HomeInventory.Application.Common;
-using MediatR;
-
 namespace HomeInventory.Application.Commands.Items.UpdateItem;
 
 public record UpdateItemCommand(
@@ -19,4 +16,4 @@ public record UpdateItemCommand(
     double? GpsLongitude,
     Guid? CategoryId,
     List<string>? Tags
-) : IRequest<Result>;
+) : Command(Id);

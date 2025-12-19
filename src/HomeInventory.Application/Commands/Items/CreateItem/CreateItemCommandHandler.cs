@@ -1,87 +1,76 @@
-using HomeInventory.Application.Common;
 using HomeInventory.Domain.Aggregates.CategoryAggregate;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate;
 using HomeInventory.Domain.Repositories;
 using HomeInventory.Domain.ValueObjects;
-using MediatR;
 
 namespace HomeInventory.Application.Commands.Items.CreateItem;
 
 public class CreateItemCommandHandler(IInventoryItemRepository itemRepository)
-    : IRequestHandler<CreateItemCommand, Result<Guid>>
+    : ICommandHandler<CreateItemCommand>
 {
-    public async Task<Result<Guid>> Handle(CreateItemCommand request, CancellationToken cancellationToken)
+    public async Task HandleAsync(CreateItemCommand command, CancellationToken cancellationToken = default)
     {
-        try
+        // Create basic info
+        var basicInfo = ItemBasicInfo.Create(
+            command.Name,
+            command.Description,
+            command.Quantity
+        );
+
+        // Create financial info
+        FinancialInfo? financialInfo = null;
+        if (command.PurchasePrice.HasValue || command.CurrentValue.HasValue)
         {
-            // Create basic info
-            var basicInfo = ItemBasicInfo.Create(
-                request.Name,
-                request.Description,
-                request.Quantity
-            );
-
-            // Create financial info
-            FinancialInfo? financialInfo = null;
-            if (request.PurchasePrice.HasValue || request.CurrentValue.HasValue)
-            {
-                Money? purchasePrice = request.PurchasePrice.HasValue
-                    ? Money.Create(request.PurchasePrice.Value, request.PurchaseCurrency ?? "USD")
-                    : null;
-
-                Money? currentValue = request.CurrentValue.HasValue
-                    ? Money.Create(request.CurrentValue.Value, request.CurrentValueCurrency ?? "USD")
-                    : null;
-
-                financialInfo = FinancialInfo.Create(purchasePrice, currentValue, request.PurchaseDate);
-            }
-
-            // Create location
-            Location? location = null;
-            if (!string.IsNullOrWhiteSpace(request.Room) ||
-                !string.IsNullOrWhiteSpace(request.StorageSpot) ||
-                request is { GpsLatitude: not null, GpsLongitude: not null })
-            {
-                GpsCoordinates? coordinates = null;
-                if (request.GpsLatitude.HasValue && request.GpsLongitude.HasValue)
-                {
-                    coordinates = GpsCoordinates.Create(request.GpsLatitude.Value, request.GpsLongitude.Value);
-                }
-
-                location = Location.Create(request.Room, request.StorageSpot, coordinates);
-            }
-
-            // Create category reference
-            var categoryId = request.CategoryId.HasValue
-                ? CategoryId.From(request.CategoryId.Value)
+            Money? purchasePrice = command.PurchasePrice.HasValue
+                ? Money.Create(command.PurchasePrice.Value, command.PurchaseCurrency ?? "USD")
                 : null;
 
-            // Create the inventory item
-            var item = InventoryItem.Create(
-                ItemId.New(),
-                basicInfo,
-                financialInfo,
-                location,
-                categoryId
-            );
+            Money? currentValue = command.CurrentValue.HasValue
+                ? Money.Create(command.CurrentValue.Value, command.CurrentValueCurrency ?? "USD")
+                : null;
 
-            // Add tags if provided
-            if (request.Tags != null && request.Tags.Any())
+            financialInfo = FinancialInfo.Create(purchasePrice, currentValue, command.PurchaseDate);
+        }
+
+        // Create location
+        Location? location = null;
+        if (!string.IsNullOrWhiteSpace(command.Room) ||
+            !string.IsNullOrWhiteSpace(command.StorageSpot) ||
+            command is { GpsLatitude: not null, GpsLongitude: not null })
+        {
+            GpsCoordinates? coordinates = null;
+            if (command.GpsLatitude.HasValue && command.GpsLongitude.HasValue)
             {
-                foreach (var tagValue in request.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
-                {
-                    item.AddTag(Tag.Create(tagValue));
-                }
+                coordinates = GpsCoordinates.Create(command.GpsLatitude.Value, command.GpsLongitude.Value);
             }
 
-            // Save to repository
-            await itemRepository.AddAsync(item, cancellationToken);
+            location = Location.Create(command.Room, command.StorageSpot, coordinates);
+        }
 
-            return Result<Guid>.Success(item.Id.Value);
-        }
-        catch (Exception ex)
+        // Create category reference
+        var categoryId = command.CategoryId.HasValue
+            ? CategoryId.From(command.CategoryId.Value)
+            : null;
+
+        // Create the inventory item
+        var item = InventoryItem.Create(
+            ItemId.From(command.Id),
+            basicInfo,
+            financialInfo,
+            location,
+            categoryId
+        );
+
+        // Add tags if provided
+        if (command.Tags != null && command.Tags.Any())
         {
-            return Result<Guid>.Failure($"Failed to create item: {ex.Message}");
+            foreach (var tagValue in command.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
+            {
+                item.AddTag(Tag.Create(tagValue));
+            }
         }
+
+        // Save to repository
+        await itemRepository.AddAsync(item, cancellationToken);
     }
 }

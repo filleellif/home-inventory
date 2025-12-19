@@ -23,7 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HomeInventory.Application\HomeInventory.Application.csproj" />
     <ProjectReference Include="..\HomeInventory.Infrastructure\HomeInventory.Infrastructure.csproj" />
-    <ProjectReference Include="..\HomeInventory.Shared\HomeInventory.Shared.csproj" />
+    <ProjectReference Include="..\HomeInventory.Queries\HomeInventory.Queries.csproj" />
   </ItemGroup>
 
 </Project>

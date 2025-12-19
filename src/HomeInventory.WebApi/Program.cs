@@ -1,17 +1,18 @@
 using HomeInventory.Application;
 using HomeInventory.Infrastructure;
+using HomeInventory.Queries;
 using HomeInventory.WebApi;
 using HomeInventory.WebApi.Configuration;
 using HomeInventory.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
-var applicationOptions = builder.Configuration.Get<ApplicationOptions>() ?? throw new InvalidOperationException("");
-
-builder.Services.ConfigureLogging(applicationOptions.OpenTelemetry);
+var applicationOptions = builder.Configuration.Get<ApplicationOptions>() ?? throw new InvalidOperationException();
 
 builder.Services.AddControllers();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(applicationOptions.Postgres);
+builder.Services.AddQueries();
+builder.Services.ConfigureLogging(applicationOptions.OpenTelemetry);
 
 builder.Services.AddCors(options =>
 {
@@ -63,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 // Add global exception handling
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 

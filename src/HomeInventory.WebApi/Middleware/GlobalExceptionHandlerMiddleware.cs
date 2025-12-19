@@ -48,16 +48,13 @@ public class GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<Glob
                 statusCode = HttpStatusCode.Unauthorized;
                 message = "Unauthorized access";
                 break;
-
-            default:
-                break;
         }
 
         var response = new
         {
             status = (int)statusCode,
             message,
-            errors = errors.Any() ? errors : null
+            errors = errors.Count != 0 ? errors : null
         };
 
         context.Response.ContentType = "application/json";

@@ -1,9 +1,7 @@
-using HomeInventory.Application.Common;
-using MediatR;
-
 namespace HomeInventory.Application.Commands.Items.CreateItem;
 
-public record CreateItemCommand(
+public sealed record CreateItemCommand(
+    Guid Id,
     string Name,
     string? Description,
     int Quantity,
@@ -18,4 +16,4 @@ public record CreateItemCommand(
     double? GpsLongitude,
     Guid? CategoryId,
     List<string>? Tags
-) : IRequest<Result<Guid>>;
+) : Command(Id);

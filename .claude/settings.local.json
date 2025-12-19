@@ -6,7 +6,8 @@
       "Bash(dotnet ef migrations add:*)",
       "Bash(cat:*)",
       "Bash(npm install)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(dotnet remove:*)"
     ]
   }
 }

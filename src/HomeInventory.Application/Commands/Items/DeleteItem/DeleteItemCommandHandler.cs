@@ -1,31 +1,21 @@
-using HomeInventory.Application.Common;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate;
+using HomeInventory.Domain.Common;
 using HomeInventory.Domain.Repositories;
-using MediatR;
 
 namespace HomeInventory.Application.Commands.Items.DeleteItem;
 
 public class DeleteItemCommandHandler(IInventoryItemRepository itemRepository)
-    : IRequestHandler<DeleteItemCommand, Result>
+    : ICommandHandler<DeleteItemCommand>
 {
-    public async Task<Result> Handle(DeleteItemCommand request, CancellationToken cancellationToken)
+    public async Task HandleAsync(DeleteItemCommand command, CancellationToken cancellationToken = default)
     {
-        try
+        var item = await itemRepository.GetByIdAsync(ItemId.From(command.Id), cancellationToken);
+
+        if (item == null)
         {
-            var item = await itemRepository.GetByIdAsync(ItemId.From(request.Id), cancellationToken);
-
-            if (item == null)
-            {
-                return Result.Failure($"Item with ID {request.Id} not found.");
-            }
-
-            await itemRepository.DeleteAsync(ItemId.From(request.Id), cancellationToken);
-
-            return Result.Success();
+            throw new DomainException($"Item with ID {command.Id} not found.");
         }
-        catch (Exception ex)
-        {
-            return Result.Failure($"Failed to delete item: {ex.Message}");
-        }
+
+        await itemRepository.DeleteAsync(ItemId.From(command.Id), cancellationToken);
     }
 }

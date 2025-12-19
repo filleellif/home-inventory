@@ -1,73 +1,63 @@
-using HomeInventory.Application.Common;
 using HomeInventory.Domain.Aggregates.CategoryAggregate;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate;
+using HomeInventory.Domain.Common;
 using HomeInventory.Domain.Repositories;
 using HomeInventory.Domain.ValueObjects;
-using MediatR;
 
 namespace HomeInventory.Application.Commands.Items.UpdateItem;
 
 public class UpdateItemCommandHandler(IInventoryItemRepository itemRepository)
-    : IRequestHandler<UpdateItemCommand, Result>
+    : ICommandHandler<UpdateItemCommand>
 {
-    public async Task<Result> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
+    public async Task HandleAsync(UpdateItemCommand command, CancellationToken cancellationToken = default)
     {
-        try
+        var item = await itemRepository.GetByIdAsync(ItemId.From(command.Id), cancellationToken);
+
+        if (item == null)
         {
-            var item = await itemRepository.GetByIdAsync(ItemId.From(request.Id), cancellationToken);
-
-            if (item == null)
-            {
-                return Result.Failure($"Item with ID {request.Id} not found.");
-            }
-
-            // Update basic info
-            var basicInfo = ItemBasicInfo.Create(request.Name, request.Description, request.Quantity);
-            item.UpdateBasicInfo(basicInfo);
-
-            // Update financial info
-            var purchasePrice = request.PurchasePrice.HasValue
-                ? Money.Create(request.PurchasePrice.Value, request.PurchaseCurrency ?? "USD")
-                : null;
-
-            var currentValue = request.CurrentValue.HasValue
-                ? Money.Create(request.CurrentValue.Value, request.CurrentValueCurrency ?? "USD")
-                : null;
-
-            var financialInfo = FinancialInfo.Create(purchasePrice, currentValue, request.PurchaseDate);
-            item.UpdateFinancialInfo(financialInfo);
-
-            // Update location
-            GpsCoordinates? coordinates = null;
-            if (request.GpsLatitude.HasValue && request.GpsLongitude.HasValue)
-            {
-                coordinates = GpsCoordinates.Create(request.GpsLatitude.Value, request.GpsLongitude.Value);
-            }
-
-            var location = Location.Create(request.Room, request.StorageSpot, coordinates);
-            item.UpdateLocation(location);
-
-            // Update category
-            var categoryId = request.CategoryId.HasValue ? CategoryId.From(request.CategoryId.Value) : null;
-            item.AssignCategory(categoryId);
-
-            // Update tags
-            item.ClearTags();
-            if (request.Tags != null && request.Tags.Count != 0)
-            {
-                foreach (var tagValue in request.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
-                {
-                    item.AddTag(Tag.Create(tagValue));
-                }
-            }
-
-            await itemRepository.UpdateAsync(item, cancellationToken);
-
-            return Result.Success();
+            throw new DomainException($"Item with ID {command.Id} not found.");
         }
-        catch (Exception ex)
+
+        // Update basic info
+        var basicInfo = ItemBasicInfo.Create(command.Name, command.Description, command.Quantity);
+        item.UpdateBasicInfo(basicInfo);
+
+        // Update financial info
+        var purchasePrice = command.PurchasePrice.HasValue
+            ? Money.Create(command.PurchasePrice.Value, command.PurchaseCurrency ?? "USD")
+            : null;
+
+        var currentValue = command.CurrentValue.HasValue
+            ? Money.Create(command.CurrentValue.Value, command.CurrentValueCurrency ?? "USD")
+            : null;
+
+        var financialInfo = FinancialInfo.Create(purchasePrice, currentValue, command.PurchaseDate);
+        item.UpdateFinancialInfo(financialInfo);
+
+        // Update location
+        GpsCoordinates? coordinates = null;
+        if (command.GpsLatitude.HasValue && command.GpsLongitude.HasValue)
         {
-            return Result.Failure($"Failed to update item: {ex.Message}");
+            coordinates = GpsCoordinates.Create(command.GpsLatitude.Value, command.GpsLongitude.Value);
         }
+
+        var location = Location.Create(command.Room, command.StorageSpot, coordinates);
+        item.UpdateLocation(location);
+
+        // Update category
+        var categoryId = command.CategoryId.HasValue ? CategoryId.From(command.CategoryId.Value) : null;
+        item.AssignCategory(categoryId);
+
+        // Update tags
+        item.ClearTags();
+        if (command.Tags != null && command.Tags.Count != 0)
+        {
+            foreach (var tagValue in command.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
+            {
+                item.AddTag(Tag.Create(tagValue));
+            }
+        }
+
+        await itemRepository.UpdateAsync(item, cancellationToken);
     }
 }
