@@ -14,7 +14,6 @@ public class InventoryItemRepository(ApplicationDbContext context) : IInventoryI
         var model = await context.InventoryItems
             .Include(x => x.Photos)
             .Include(x => x.Receipts)
-            .Include(x => x.Tags)
             .FirstOrDefaultAsync(x => x.Id == id.Value, cancellationToken);
 
         return model?.ToDomain();
@@ -25,7 +24,6 @@ public class InventoryItemRepository(ApplicationDbContext context) : IInventoryI
         var models = await context.InventoryItems
             .Include(x => x.Photos)
             .Include(x => x.Receipts)
-            .Include(x => x.Tags)
             .OrderByDescending(x => x.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -39,23 +37,7 @@ public class InventoryItemRepository(ApplicationDbContext context) : IInventoryI
         var models = await context.InventoryItems
             .Include(x => x.Photos)
             .Include(x => x.Receipts)
-            .Include(x => x.Tags)
             .Where(x => x.CategoryId == categoryId.Value)
-            .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return models.Select(m => m.ToDomain()).ToList();
-    }
-
-    public async Task<List<InventoryItem>> GetByTagsAsync(List<Tag> tags, CancellationToken cancellationToken = default)
-    {
-        var tagValues = tags.Select(t => t.Value).ToList();
-
-        var models = await context.InventoryItems
-            .Include(x => x.Photos)
-            .Include(x => x.Receipts)
-            .Include(x => x.Tags)
-            .Where(item => item.Tags.Any(tag => tagValues.Contains(tag.TagValue)))
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -88,11 +70,6 @@ public class InventoryItemRepository(ApplicationDbContext context) : IInventoryI
             .Where(r => r.ItemId == item.Id.Value)
             .ToListAsync(cancellationToken);
         context.ItemReceipts.RemoveRange(existingReceipts);
-
-        var existingTags = await context.ItemTags
-            .Where(t => t.ItemId == item.Id.Value)
-            .ToListAsync(cancellationToken);
-        context.ItemTags.RemoveRange(existingTags);
 
         // Update the main item
         context.InventoryItems.Update(model);

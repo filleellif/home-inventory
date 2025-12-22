@@ -9,7 +9,6 @@ public class InventoryItem : AggregateRoot<ItemId>
 {
     private readonly List<MediaReference> _photos = new();
     private readonly List<MediaReference> _receipts = new();
-    private readonly List<Tag> _tags = new();
 
     public ItemBasicInfo BasicInfo { get; private set; }
     public FinancialInfo FinancialInfo { get; private set; }
@@ -18,7 +17,6 @@ public class InventoryItem : AggregateRoot<ItemId>
 
     public IReadOnlyCollection<MediaReference> Photos => _photos.AsReadOnly();
     public IReadOnlyCollection<MediaReference> Receipts => _receipts.AsReadOnly();
-    public IReadOnlyCollection<Tag> Tags => _tags.AsReadOnly();
 
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
@@ -129,40 +127,6 @@ public class InventoryItem : AggregateRoot<ItemId>
             throw new ArgumentNullException(nameof(receipt));
 
         _receipts.Remove(receipt);
-        UpdatedAt = DateTime.UtcNow;
-        AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
-    }
-
-    public void AddTag(Tag tag)
-    {
-        if (tag == null)
-            throw new ArgumentNullException(nameof(tag));
-
-        if (_tags.Any(t => t.Value == tag.Value))
-            return; // Tag already exists, skip
-
-        _tags.Add(tag);
-        UpdatedAt = DateTime.UtcNow;
-        AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
-    }
-
-    public void RemoveTag(Tag tag)
-    {
-        if (tag == null)
-            throw new ArgumentNullException(nameof(tag));
-
-        var existingTag = _tags.FirstOrDefault(t => t.Value == tag.Value);
-        if (existingTag != null)
-        {
-            _tags.Remove(existingTag);
-            UpdatedAt = DateTime.UtcNow;
-            AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
-        }
-    }
-
-    public void ClearTags()
-    {
-        _tags.Clear();
         UpdatedAt = DateTime.UtcNow;
         AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
     }

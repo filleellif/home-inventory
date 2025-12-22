@@ -10,10 +10,11 @@ public sealed record CreateItemCommand(
     decimal? CurrentValue,
     string? CurrentValueCurrency,
     DateTime? PurchaseDate,
-    string? Room,
-    string? StorageSpot,
-    double? GpsLatitude,
-    double? GpsLongitude,
-    Guid? CategoryId,
-    List<string>? Tags
+    string? RoomName,
+    string? RoomQrCode,
+    string? ShelfName,
+    string? ShelfQrCode,
+    string? BoxName,
+    string? BoxQrCode,
+    Guid? CategoryId
 ) : Command(Id);

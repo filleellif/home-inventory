@@ -38,17 +38,29 @@ public static class InventoryItemMapper
 
         // Reconstruct Location value object
         Location location;
-        if (!string.IsNullOrWhiteSpace(model.Room) ||
-            !string.IsNullOrWhiteSpace(model.StorageSpot) ||
-            model.GpsLatitude.HasValue)
+        if (!string.IsNullOrWhiteSpace(model.RoomName) ||
+            !string.IsNullOrWhiteSpace(model.ShelfName) ||
+            !string.IsNullOrWhiteSpace(model.BoxName) ||
+            !string.IsNullOrWhiteSpace(model.RoomQrCode) ||
+            !string.IsNullOrWhiteSpace(model.ShelfQrCode) ||
+            !string.IsNullOrWhiteSpace(model.BoxQrCode))
         {
-            GpsCoordinates? coords = null;
-            if (model.GpsLatitude.HasValue && model.GpsLongitude.HasValue)
-            {
-                coords = GpsCoordinates.Create(model.GpsLatitude.Value, model.GpsLongitude.Value);
-            }
+            QrCode? roomQr = !string.IsNullOrWhiteSpace(model.RoomQrCode)
+                ? QrCode.Create(model.RoomQrCode)
+                : null;
 
-            location = Location.Create(model.Room, model.StorageSpot, coords);
+            QrCode? shelfQr = !string.IsNullOrWhiteSpace(model.ShelfQrCode)
+                ? QrCode.Create(model.ShelfQrCode)
+                : null;
+
+            QrCode? boxQr = !string.IsNullOrWhiteSpace(model.BoxQrCode)
+                ? QrCode.Create(model.BoxQrCode)
+                : null;
+
+            location = Location.Create(
+                model.RoomName, roomQr,
+                model.ShelfName, shelfQr,
+                model.BoxName, boxQr);
         }
         else
         {
@@ -93,13 +105,6 @@ public static class InventoryItemMapper
             item.AddReceipt(receipt);
         }
 
-        // Add tags via domain methods
-        foreach (var tagModel in model.Tags)
-        {
-            var tag = Tag.Create(tagModel.TagValue);
-            item.AddTag(tag);
-        }
-
         // Use reflection to set timestamps since they're set in the constructor
         typeof(InventoryItem)
             .GetProperty(nameof(InventoryItem.CreatedAt))!
@@ -131,10 +136,12 @@ public static class InventoryItemMapper
             PurchaseDate = domain.FinancialInfo.PurchaseDate,
 
             // Location flattened
-            Room = domain.Location.Room,
-            StorageSpot = domain.Location.StorageSpot,
-            GpsLatitude = domain.Location.Coordinates?.Latitude,
-            GpsLongitude = domain.Location.Coordinates?.Longitude,
+            RoomName = domain.Location.RoomName,
+            RoomQrCode = domain.Location.RoomQrCode?.Code,
+            ShelfName = domain.Location.ShelfName,
+            ShelfQrCode = domain.Location.ShelfQrCode?.Code,
+            BoxName = domain.Location.BoxName,
+            BoxQrCode = domain.Location.BoxQrCode?.Code,
 
             CategoryId = domain.CategoryId?.Value,
 
@@ -162,12 +169,6 @@ public static class InventoryItemMapper
                 MediaType = r.MediaType.ToString(),
                 UploadedAt = r.UploadedAt,
                 FileSizeBytes = r.FileSizeBytes
-            }).ToList(),
-
-            Tags = domain.Tags.Select(t => new ItemTagModel
-            {
-                ItemId = domain.Id.Value,
-                TagValue = t.Value
             }).ToList()
         };
     }

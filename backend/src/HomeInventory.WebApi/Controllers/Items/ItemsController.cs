@@ -4,6 +4,7 @@ using HomeInventory.Application.Commands.Items.DeleteItem;
 using HomeInventory.Application.Commands.Items.UpdateItem;
 using HomeInventory.Queries.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using QRCoder;
 
 namespace HomeInventory.WebApi.Controllers.Items;
 
@@ -104,5 +105,51 @@ public class ItemsController(
         await handler.HandleAsync(command);
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Get items by QR code
+    /// </summary>
+    [HttpGet("by-qrcode/{qrCode}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByQrCode(string qrCode)
+    {
+        logger.LogInformation("Fetching items with QR code: {QrCode}", qrCode);
+
+        var items = await itemQueries.GetByQrCodeAsync(qrCode);
+
+        return Ok(items);
+    }
+
+    /// <summary>
+    /// Generate a new QR code
+    /// </summary>
+    [HttpPost("generate-qr")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GenerateQrCode()
+    {
+        var qrCode = Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
+
+        logger.LogInformation("Generated QR code: {QrCode}", qrCode);
+
+        return Ok(new { qrCode });
+    }
+
+    /// <summary>
+    /// Generate a printable QR code label
+    /// </summary>
+    [HttpGet("qr-label/{qrCode}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetQrLabel(string qrCode, [FromQuery] string? label = null)
+    {
+        logger.LogInformation("Generating QR label for code: {QrCode}", qrCode);
+
+        using var qrGenerator = new QRCodeGenerator();
+        using var qrCodeData = qrGenerator.CreateQrCode(qrCode, QRCodeGenerator.ECCLevel.Q);
+        using var pngQrCode = new PngByteQRCode(qrCodeData);
+
+        var qrCodeImage = pngQrCode.GetGraphic(20);
+
+        return File(qrCodeImage, "image/png", $"qr-label-{qrCode}.png");
     }
 }

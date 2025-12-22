@@ -11,12 +11,13 @@ public sealed record CreateItemRequest(
     decimal? CurrentValue,
     string? CurrentValueCurrency,
     DateTime? PurchaseDate,
-    string? Room,
-    string? StorageSpot,
-    double? GpsLatitude,
-    double? GpsLongitude,
-    Guid? CategoryId,
-    List<string>? Tags);
+    string? RoomName,
+    string? RoomQrCode,
+    string? ShelfName,
+    string? ShelfQrCode,
+    string? BoxName,
+    string? BoxQrCode,
+    Guid? CategoryId);
 
 internal static class CreateItemRequestExtensions
 {
@@ -30,10 +31,11 @@ internal static class CreateItemRequestExtensions
         request.CurrentValue,
         request.CurrentValueCurrency,
         request.PurchaseDate,
-        request.Room,
-        request.StorageSpot,
-        request.GpsLatitude,
-        request.GpsLongitude,
-        request.CategoryId,
-        request.Tags);
+        request.RoomName,
+        request.RoomQrCode,
+        request.ShelfName,
+        request.ShelfQrCode,
+        request.BoxName,
+        request.BoxQrCode,
+        request.CategoryId);
 }

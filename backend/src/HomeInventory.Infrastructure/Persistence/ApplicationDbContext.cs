@@ -14,8 +14,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<ItemReceiptModel> ItemReceipts => Set<ItemReceiptModel>();
 
-    public DbSet<ItemTagModel> ItemTags => Set<ItemTagModel>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

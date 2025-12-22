@@ -15,7 +15,7 @@ public interface IItemQueries
         Guid categoryId,
         CancellationToken cancellationToken = default);
 
-    Task<List<ItemListReadModel>> GetByTagsAsync(
-        List<string> tags,
+    Task<List<ItemListReadModel>> GetByQrCodeAsync(
+        string qrCode,
         CancellationToken cancellationToken = default);
 }

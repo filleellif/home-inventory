@@ -17,10 +17,12 @@ public class InventoryItemModel
     public DateTime? PurchaseDate { get; init; }
 
     // Location flattened
-    public string? Room { get; init; }
-    public string? StorageSpot { get; init; }
-    public double? GpsLatitude { get; init; }
-    public double? GpsLongitude { get; init; }
+    public string? RoomName { get; init; }
+    public string? RoomQrCode { get; init; }
+    public string? ShelfName { get; init; }
+    public string? ShelfQrCode { get; init; }
+    public string? BoxName { get; init; }
+    public string? BoxQrCode { get; init; }
 
     public Guid? CategoryId { get; init; }
 
@@ -30,5 +32,4 @@ public class InventoryItemModel
     // Navigation collections (EF will handle separate tables)
     public List<ItemPhotoModel> Photos { get; init; } = [];
     public List<ItemReceiptModel> Receipts { get; init; } = [];
-    public List<ItemTagModel> Tags { get; init; } = [];
 }

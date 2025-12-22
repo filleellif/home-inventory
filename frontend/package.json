@@ -14,8 +14,11 @@
     "@headlessui/vue": "^1.7.22",
     "@heroicons/vue": "^2.1.5",
     "@pinia/nuxt": "^0.5.1",
+    "@types/qrcode": "^1.5.6",
+    "html5-qrcode": "^2.3.8",
     "nuxt": "^4.2.2",
     "pinia": "^2.2.2",
+    "qrcode": "^1.5.4",
     "vue": "^3.5.26"
   },
   "devDependencies": {

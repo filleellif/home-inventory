@@ -35,17 +35,5 @@ public class UpdateItemCommandValidator : AbstractValidator<UpdateItemCommand>
         RuleFor(x => x.PurchaseDate)
             .LessThanOrEqualTo(DateTime.UtcNow).When(x => x.PurchaseDate.HasValue)
             .WithMessage("Purchase date cannot be in the future.");
-
-        RuleFor(x => x.GpsLatitude)
-            .InclusiveBetween(-90, 90).When(x => x.GpsLatitude.HasValue)
-            .WithMessage("Latitude must be between -90 and 90 degrees.");
-
-        RuleFor(x => x.GpsLongitude)
-            .InclusiveBetween(-180, 180).When(x => x.GpsLongitude.HasValue)
-            .WithMessage("Longitude must be between -180 and 180 degrees.");
-
-        RuleForEach(x => x.Tags)
-            .MaximumLength(50).When(x => x.Tags != null)
-            .WithMessage("Each tag cannot exceed 50 characters.");
     }
 }

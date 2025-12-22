@@ -13,7 +13,6 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
             .AsNoTracking()
             .Include(x => x.Photos)
             .Include(x => x.Receipts)
-            .Include(x => x.Tags)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
         if (item == null)
@@ -30,10 +29,12 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
             CurrentValueAmount = item.CurrentValueAmount,
             CurrentValueCurrency = item.CurrentValueCurrency,
             PurchaseDate = item.PurchaseDate,
-            Room = item.Room,
-            StorageSpot = item.StorageSpot,
-            GpsLatitude = item.GpsLatitude,
-            GpsLongitude = item.GpsLongitude,
+            RoomName = item.RoomName,
+            RoomQrCode = item.RoomQrCode,
+            ShelfName = item.ShelfName,
+            ShelfQrCode = item.ShelfQrCode,
+            BoxName = item.BoxName,
+            BoxQrCode = item.BoxQrCode,
             CategoryId = item.CategoryId,
             CreatedAt = item.CreatedAt,
             UpdatedAt = item.UpdatedAt,
@@ -54,8 +55,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
                 MediaType = r.MediaType,
                 UploadedAt = r.UploadedAt,
                 FileSizeBytes = r.FileSizeBytes
-            }).ToList(),
-            Tags = item.Tags.Select(t => t.TagValue).ToList()
+            }).ToList()
         };
     }
 
@@ -80,7 +80,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
                 Quantity = i.Quantity,
                 CurrentValueAmount = i.CurrentValueAmount,
                 CurrentValueCurrency = i.CurrentValueCurrency,
-                Room = i.Room,
+                RoomName = i.RoomName,
                 CategoryId = i.CategoryId,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt
@@ -104,7 +104,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
                 Quantity = i.Quantity,
                 CurrentValueAmount = i.CurrentValueAmount,
                 CurrentValueCurrency = i.CurrentValueCurrency,
-                Room = i.Room,
+                RoomName = i.RoomName,
                 CategoryId = i.CategoryId,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt
@@ -112,11 +112,13 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<ItemListReadModel>> GetByTagsAsync(List<string> tags, CancellationToken cancellationToken = default)
+    public async Task<List<ItemListReadModel>> GetByQrCodeAsync(string qrCode, CancellationToken cancellationToken = default)
     {
         return await context.InventoryItems
             .AsNoTracking()
-            .Where(item => item.Tags.Any(tag => tags.Contains(tag.TagValue)))
+            .Where(i => i.RoomQrCode == qrCode ||
+                        i.ShelfQrCode == qrCode ||
+                        i.BoxQrCode == qrCode)
             .OrderByDescending(i => i.CreatedAt)
             .Select(i => new ItemListReadModel
             {
@@ -126,7 +128,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
                 Quantity = i.Quantity,
                 CurrentValueAmount = i.CurrentValueAmount,
                 CurrentValueCurrency = i.CurrentValueCurrency,
-                Room = i.Room,
+                RoomName = i.RoomName,
                 CategoryId = i.CategoryId,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt

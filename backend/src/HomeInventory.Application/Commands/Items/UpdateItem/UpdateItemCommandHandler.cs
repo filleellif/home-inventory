@@ -35,28 +35,27 @@ public class UpdateItemCommandHandler(IInventoryItemRepository itemRepository)
         item.UpdateFinancialInfo(financialInfo);
 
         // Update location
-        GpsCoordinates? coordinates = null;
-        if (command.GpsLatitude.HasValue && command.GpsLongitude.HasValue)
-        {
-            coordinates = GpsCoordinates.Create(command.GpsLatitude.Value, command.GpsLongitude.Value);
-        }
+        QrCode? roomQr = !string.IsNullOrWhiteSpace(command.RoomQrCode)
+            ? QrCode.Create(command.RoomQrCode)
+            : null;
 
-        var location = Location.Create(command.Room, command.StorageSpot, coordinates);
+        QrCode? shelfQr = !string.IsNullOrWhiteSpace(command.ShelfQrCode)
+            ? QrCode.Create(command.ShelfQrCode)
+            : null;
+
+        QrCode? boxQr = !string.IsNullOrWhiteSpace(command.BoxQrCode)
+            ? QrCode.Create(command.BoxQrCode)
+            : null;
+
+        var location = Location.Create(
+            command.RoomName, roomQr,
+            command.ShelfName, shelfQr,
+            command.BoxName, boxQr);
         item.UpdateLocation(location);
 
         // Update category
         var categoryId = command.CategoryId.HasValue ? CategoryId.From(command.CategoryId.Value) : null;
         item.AssignCategory(categoryId);
-
-        // Update tags
-        item.ClearTags();
-        if (command.Tags != null && command.Tags.Count != 0)
-        {
-            foreach (var tagValue in command.Tags.Where(tagValue => !string.IsNullOrWhiteSpace(tagValue)))
-            {
-                item.AddTag(Tag.Create(tagValue));
-            }
-        }
 
         await itemRepository.UpdateAsync(item, cancellationToken);
     }

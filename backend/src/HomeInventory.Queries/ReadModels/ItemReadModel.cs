@@ -13,10 +13,12 @@ public class ItemReadModel
     public string? CurrentValueCurrency { get; init; }
     public DateTime? PurchaseDate { get; init; }
 
-    public string? Room { get; init; }
-    public string? StorageSpot { get; init; }
-    public double? GpsLatitude { get; init; }
-    public double? GpsLongitude { get; init; }
+    public string? RoomName { get; init; }
+    public string? RoomQrCode { get; init; }
+    public string? ShelfName { get; init; }
+    public string? ShelfQrCode { get; init; }
+    public string? BoxName { get; init; }
+    public string? BoxQrCode { get; init; }
 
     public Guid? CategoryId { get; init; }
 
@@ -25,5 +27,4 @@ public class ItemReadModel
 
     public List<MediaReferenceReadModel> Photos { get; init; } = new();
     public List<MediaReferenceReadModel> Receipts { get; init; } = new();
-    public List<string> Tags { get; init; } = new();
 }
