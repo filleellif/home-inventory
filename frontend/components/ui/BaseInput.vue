@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<{ 'update:modelValue': [value: string] }>()
 
-const inputId = `input-${Math.random().toString(36).substr(2, 9)}`
+const inputId = useId()
 
 const inputClasses = computed(() => {
   const base = 'block w-full rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm'

@@ -3,6 +3,7 @@ import type { UseFetchOptions } from 'nuxt/app'
 export const useApi = () => {
   const config = useRuntimeConfig()
   const baseURL = config.public.apiBase
+  const { startLoading, stopLoading } = useLoading()
 
   const apiFetch = async <T>(
     endpoint: string,
@@ -12,6 +13,8 @@ export const useApi = () => {
     const defaultOptions: UseFetchOptions<T> = {
       baseURL,
       credentials: 'include', // For future auth cookies
+      // Skip SSR for localhost APIs (not accessible from server)
+      server: baseURL.includes('localhost') ? false : true,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -39,7 +42,7 @@ export const useApi = () => {
       }
     }
 
-    return useFetch<T>(endpoint, {
+    const result = await useFetch<T>(endpoint, {
       ...defaultOptions,
       ...options,
       headers: {
@@ -47,6 +50,19 @@ export const useApi = () => {
         ...options.headers,
       } as HeadersInit
     })
+
+    // Watch pending state to control loading indicator (client-side only)
+    if (process.client) {
+      watch(result.pending, (isPending) => {
+        if (isPending) {
+          startLoading()
+        } else {
+          stopLoading()
+        }
+      }, { immediate: true })
+    }
+
+    return result
   }
 
   return {

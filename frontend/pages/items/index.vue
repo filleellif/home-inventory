@@ -15,23 +15,25 @@
       :categories="categories"
     />
 
-    <ItemTable
-      :items="items?.items"
-      :loading="pending"
-      :categories="categories"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @create="navigateTo('/items/new')"
-    />
+    <ClientOnly>
+      <ItemTable
+        :items="items?.items"
+        :loading="pending"
+        :categories="categories"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @create="navigateTo('/items/new')"
+      />
 
-    <BasePagination
-      v-if="items"
-      :current-page="items.pageNumber"
-      :total-pages="items.totalPages"
-      :has-previous="items.hasPreviousPage"
-      :has-next="items.hasNextPage"
-      @page-change="goToPage"
-    />
+      <BasePagination
+        v-if="items && items.totalPages"
+        :current-page="items.pageNumber"
+        :total-pages="items.totalPages"
+        :has-previous="items.hasPreviousPage"
+        :has-next="items.hasNextPage"
+        @page-change="goToPage"
+      />
+    </ClientOnly>
   </div>
 </template>
 

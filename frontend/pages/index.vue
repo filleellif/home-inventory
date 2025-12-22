@@ -43,42 +43,44 @@
         </NuxtLink>
       </div>
 
-      <div v-if="pending" class="flex justify-center items-center h-32">
-        <LoadingSpinner size="lg" />
-      </div>
+      <ClientOnly>
+        <div v-if="pending" class="flex justify-center items-center h-32">
+          <LoadingSpinner size="lg" />
+        </div>
 
-      <div v-else-if="recentItems.length === 0">
-        <EmptyState
-          title="No items yet"
-          description="Get started by adding your first item"
-        >
-          <template #action>
-            <BaseButton @click="navigateTo('/items/new')">
-              Add Item
-            </BaseButton>
-          </template>
-        </EmptyState>
-      </div>
+        <div v-else-if="recentItems.length === 0">
+          <EmptyState
+            title="No items yet"
+            description="Get started by adding your first item"
+          >
+            <template #action>
+              <BaseButton @click="navigateTo('/items/new')">
+                Add Item
+              </BaseButton>
+            </template>
+          </EmptyState>
+        </div>
 
-      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <BaseCard
-          v-for="item in recentItems"
-          :key="item.id"
-          class="hover:shadow-md transition-shadow cursor-pointer"
-          @click="navigateTo(`/items/${item.id}`)"
-        >
-          <h3 class="font-medium text-gray-900">{{ item.name }}</h3>
-          <p v-if="item.description" class="mt-1 text-sm text-gray-500 line-clamp-2">
-            {{ item.description }}
-          </p>
-          <div class="mt-3 flex items-center justify-between text-sm">
-            <span class="text-gray-500">Qty: {{ item.quantity }}</span>
-            <span v-if="item.currentValue" class="font-medium text-primary-600">
-              {{ item.currentValueCurrency || '$' }}{{ item.currentValue.toFixed(2) }}
-            </span>
-          </div>
-        </BaseCard>
-      </div>
+        <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <BaseCard
+            v-for="item in recentItems"
+            :key="item.id"
+            class="hover:shadow-md transition-shadow cursor-pointer"
+            @click="navigateTo(`/items/${item.id}`)"
+          >
+            <h3 class="font-medium text-gray-900">{{ item.name }}</h3>
+            <p v-if="item.description" class="mt-1 text-sm text-gray-500 line-clamp-2">
+              {{ item.description }}
+            </p>
+            <div class="mt-3 flex items-center justify-between text-sm">
+              <span class="text-gray-500">Qty: {{ item.quantity }}</span>
+              <span v-if="item.currentValue" class="font-medium text-primary-600">
+                {{ item.currentValueCurrency || '$' }}{{ item.currentValue.toFixed(2) }}
+              </span>
+            </div>
+          </BaseCard>
+        </div>
+      </ClientOnly>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

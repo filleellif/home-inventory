@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<{ 'update:modelValue': [value: string] }>()
 
-const selectId = `select-${Math.random().toString(36).substr(2, 9)}`
+const selectId = useId()
 
 const selectClasses = computed(() => {
   const base = 'block w-full rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm'

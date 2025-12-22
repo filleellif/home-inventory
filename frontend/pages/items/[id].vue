@@ -1,9 +1,10 @@
 <template>
-  <div v-if="pending" class="flex justify-center items-center h-64">
-    <LoadingSpinner size="lg" />
-  </div>
+  <ClientOnly>
+    <div v-if="pending" class="flex justify-center items-center h-64">
+      <LoadingSpinner size="lg" />
+    </div>
 
-  <div v-else-if="item" class="space-y-6">
+    <div v-else-if="item" class="space-y-6">
     <nav class="text-sm text-gray-500">
       <NuxtLink to="/items" class="hover:text-gray-700">Items</NuxtLink>
       <span class="mx-2">/</span>
@@ -87,12 +88,13 @@
     </div>
   </div>
 
-  <div v-else class="text-center py-12">
-    <p class="text-gray-500">Item not found</p>
-    <BaseButton class="mt-4" @click="navigateTo('/items')">
-      Back to Items
-    </BaseButton>
-  </div>
+    <div v-else class="text-center py-12">
+      <p class="text-gray-500">Item not found</p>
+      <BaseButton class="mt-4" @click="navigateTo('/items')">
+        Back to Items
+      </BaseButton>
+    </div>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
