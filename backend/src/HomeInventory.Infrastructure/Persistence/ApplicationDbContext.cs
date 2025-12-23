@@ -14,6 +14,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<ItemReceiptModel> ItemReceipts => Set<ItemReceiptModel>();
 
+    public DbSet<AreaModel> Areas => Set<AreaModel>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

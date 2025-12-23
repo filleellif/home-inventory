@@ -22,6 +22,47 @@ namespace HomeInventory.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("HomeInventory.Infrastructure.Persistence.Models.AreaModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid?>("ParentAreaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_area_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_areas_name");
+
+                    b.HasIndex("ParentAreaId")
+                        .HasDatabaseName("ix_areas_parent_area_id");
+
+                    b.ToTable("areas", (string)null);
+                });
+
             modelBuilder.Entity("HomeInventory.Infrastructure.Persistence.Models.CategoryModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -71,15 +112,9 @@ namespace HomeInventory.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("BoxName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("box_name");
-
-                    b.Property<string>("BoxQrCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("box_qr_code");
+                    b.Property<Guid?>("AreaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("area_id");
 
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
@@ -126,49 +161,20 @@ namespace HomeInventory.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("quantity");
 
-                    b.Property<string>("RoomName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("room_name");
-
-                    b.Property<string>("RoomQrCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("room_qr_code");
-
-                    b.Property<string>("ShelfName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("shelf_name");
-
-                    b.Property<string>("ShelfQrCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("shelf_qr_code");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BoxQrCode")
-                        .HasDatabaseName("ix_inventory_items_box_qr_code")
-                        .HasFilter("box_qr_code IS NOT NULL");
+                    b.HasIndex("AreaId")
+                        .HasDatabaseName("ix_inventory_items_area_id");
 
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_inventory_items_category_id");
 
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("ix_inventory_items_created_at");
-
-                    b.HasIndex("RoomQrCode")
-                        .HasDatabaseName("ix_inventory_items_room_qr_code")
-                        .HasFilter("room_qr_code IS NOT NULL");
-
-                    b.HasIndex("ShelfQrCode")
-                        .HasDatabaseName("ix_inventory_items_shelf_qr_code")
-                        .HasFilter("shelf_qr_code IS NOT NULL");
 
                     b.ToTable("inventory_items", (string)null);
                 });
@@ -261,6 +267,16 @@ namespace HomeInventory.Infrastructure.Persistence.Migrations
                     b.ToTable("item_receipts", (string)null);
                 });
 
+            modelBuilder.Entity("HomeInventory.Infrastructure.Persistence.Models.AreaModel", b =>
+                {
+                    b.HasOne("HomeInventory.Infrastructure.Persistence.Models.AreaModel", "ParentArea")
+                        .WithMany("ChildAreas")
+                        .HasForeignKey("ParentAreaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentArea");
+                });
+
             modelBuilder.Entity("HomeInventory.Infrastructure.Persistence.Models.ItemPhotoModel", b =>
                 {
                     b.HasOne("HomeInventory.Infrastructure.Persistence.Models.InventoryItemModel", null)
@@ -277,6 +293,11 @@ namespace HomeInventory.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HomeInventory.Infrastructure.Persistence.Models.AreaModel", b =>
+                {
+                    b.Navigation("ChildAreas");
                 });
 
             modelBuilder.Entity("HomeInventory.Infrastructure.Persistence.Models.InventoryItemModel", b =>

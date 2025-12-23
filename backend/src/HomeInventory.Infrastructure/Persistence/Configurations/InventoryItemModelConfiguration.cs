@@ -50,30 +50,9 @@ public class InventoryItemModelConfiguration : IEntityTypeConfiguration<Inventor
         builder.Property(x => x.PurchaseDate)
             .HasColumnName("purchase_date");
 
-        // Location properties (flattened)
-        builder.Property(x => x.RoomName)
-            .HasColumnName("room_name")
-            .HasMaxLength(100);
-
-        builder.Property(x => x.RoomQrCode)
-            .HasColumnName("room_qr_code")
-            .HasMaxLength(100);
-
-        builder.Property(x => x.ShelfName)
-            .HasColumnName("shelf_name")
-            .HasMaxLength(100);
-
-        builder.Property(x => x.ShelfQrCode)
-            .HasColumnName("shelf_qr_code")
-            .HasMaxLength(100);
-
-        builder.Property(x => x.BoxName)
-            .HasColumnName("box_name")
-            .HasMaxLength(100);
-
-        builder.Property(x => x.BoxQrCode)
-            .HasColumnName("box_qr_code")
-            .HasMaxLength(100);
+        // AreaId
+        builder.Property(x => x.AreaId)
+            .HasColumnName("area_id");
 
         // CategoryId
         builder.Property(x => x.CategoryId)
@@ -101,23 +80,13 @@ public class InventoryItemModelConfiguration : IEntityTypeConfiguration<Inventor
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes
+        builder.HasIndex(x => x.AreaId)
+            .HasDatabaseName("ix_inventory_items_area_id");
+
         builder.HasIndex(x => x.CategoryId)
             .HasDatabaseName("ix_inventory_items_category_id");
 
         builder.HasIndex(x => x.CreatedAt)
             .HasDatabaseName("ix_inventory_items_created_at");
-
-        // QR Code indexes (partial indexes for performance)
-        builder.HasIndex(x => x.RoomQrCode)
-            .HasDatabaseName("ix_inventory_items_room_qr_code")
-            .HasFilter("room_qr_code IS NOT NULL");
-
-        builder.HasIndex(x => x.ShelfQrCode)
-            .HasDatabaseName("ix_inventory_items_shelf_qr_code")
-            .HasFilter("shelf_qr_code IS NOT NULL");
-
-        builder.HasIndex(x => x.BoxQrCode)
-            .HasDatabaseName("ix_inventory_items_box_qr_code")
-            .HasFilter("box_qr_code IS NOT NULL");
     }
 }

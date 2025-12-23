@@ -29,12 +29,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
             CurrentValueAmount = item.CurrentValueAmount,
             CurrentValueCurrency = item.CurrentValueCurrency,
             PurchaseDate = item.PurchaseDate,
-            RoomName = item.RoomName,
-            RoomQrCode = item.RoomQrCode,
-            ShelfName = item.ShelfName,
-            ShelfQrCode = item.ShelfQrCode,
-            BoxName = item.BoxName,
-            BoxQrCode = item.BoxQrCode,
+            AreaId = item.AreaId,
             CategoryId = item.CategoryId,
             CreatedAt = item.CreatedAt,
             UpdatedAt = item.UpdatedAt,
@@ -80,7 +75,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
                 Quantity = i.Quantity,
                 CurrentValueAmount = i.CurrentValueAmount,
                 CurrentValueCurrency = i.CurrentValueCurrency,
-                RoomName = i.RoomName,
+                AreaId = i.AreaId,
                 CategoryId = i.CategoryId,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt
@@ -104,31 +99,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
                 Quantity = i.Quantity,
                 CurrentValueAmount = i.CurrentValueAmount,
                 CurrentValueCurrency = i.CurrentValueCurrency,
-                RoomName = i.RoomName,
-                CategoryId = i.CategoryId,
-                CreatedAt = i.CreatedAt,
-                UpdatedAt = i.UpdatedAt
-            })
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<List<ItemListReadModel>> GetByQrCodeAsync(string qrCode, CancellationToken cancellationToken = default)
-    {
-        return await context.InventoryItems
-            .AsNoTracking()
-            .Where(i => i.RoomQrCode == qrCode ||
-                        i.ShelfQrCode == qrCode ||
-                        i.BoxQrCode == qrCode)
-            .OrderByDescending(i => i.CreatedAt)
-            .Select(i => new ItemListReadModel
-            {
-                Id = i.Id,
-                Name = i.Name,
-                Description = i.Description,
-                Quantity = i.Quantity,
-                CurrentValueAmount = i.CurrentValueAmount,
-                CurrentValueCurrency = i.CurrentValueCurrency,
-                RoomName = i.RoomName,
+                AreaId = i.AreaId,
                 CategoryId = i.CategoryId,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt

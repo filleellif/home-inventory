@@ -13,12 +13,7 @@ public class ItemReadModel
     public string? CurrentValueCurrency { get; init; }
     public DateTime? PurchaseDate { get; init; }
 
-    public string? RoomName { get; init; }
-    public string? RoomQrCode { get; init; }
-    public string? ShelfName { get; init; }
-    public string? ShelfQrCode { get; init; }
-    public string? BoxName { get; init; }
-    public string? BoxQrCode { get; init; }
+    public Guid? AreaId { get; init; }
 
     public Guid? CategoryId { get; init; }
 

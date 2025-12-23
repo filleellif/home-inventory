@@ -8,12 +8,7 @@ export interface ItemDto {
   currentValue?: number
   currentValueCurrency?: string
   purchaseDate?: string // ISO date string
-  roomName?: string
-  roomQrCode?: string
-  shelfName?: string
-  shelfQrCode?: string
-  boxName?: string
-  boxQrCode?: string
+  areaId?: string
   categoryId?: string
   photos: MediaReferenceDto[]
   receipts: MediaReferenceDto[]
@@ -38,12 +33,7 @@ export interface CreateItemDto {
   currentValue?: number
   currentValueCurrency?: string
   purchaseDate?: string
-  roomName?: string
-  roomQrCode?: string
-  shelfName?: string
-  shelfQrCode?: string
-  boxName?: string
-  boxQrCode?: string
+  areaId?: string
   categoryId?: string
 }
 

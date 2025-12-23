@@ -11,12 +11,7 @@ public sealed record CreateItemRequest(
     decimal? CurrentValue,
     string? CurrentValueCurrency,
     DateTime? PurchaseDate,
-    string? RoomName,
-    string? RoomQrCode,
-    string? ShelfName,
-    string? ShelfQrCode,
-    string? BoxName,
-    string? BoxQrCode,
+    Guid? AreaId,
     Guid? CategoryId);
 
 internal static class CreateItemRequestExtensions
@@ -31,11 +26,6 @@ internal static class CreateItemRequestExtensions
         request.CurrentValue,
         request.CurrentValueCurrency,
         request.PurchaseDate,
-        request.RoomName,
-        request.RoomQrCode,
-        request.ShelfName,
-        request.ShelfQrCode,
-        request.BoxName,
-        request.BoxQrCode,
+        request.AreaId,
         request.CategoryId);
 }

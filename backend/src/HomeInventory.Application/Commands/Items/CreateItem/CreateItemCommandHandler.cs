@@ -1,3 +1,4 @@
+using HomeInventory.Domain.Aggregates.AreaAggregate;
 using HomeInventory.Domain.Aggregates.CategoryAggregate;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate;
 using HomeInventory.Domain.Repositories;
@@ -32,36 +33,13 @@ public class CreateItemCommandHandler(IInventoryItemRepository itemRepository)
             financialInfo = FinancialInfo.Create(purchasePrice, currentValue, command.PurchaseDate);
         }
 
-        // Create location
-        Location? location = null;
-        if (!string.IsNullOrWhiteSpace(command.RoomName) ||
-            !string.IsNullOrWhiteSpace(command.ShelfName) ||
-            !string.IsNullOrWhiteSpace(command.BoxName) ||
-            !string.IsNullOrWhiteSpace(command.RoomQrCode) ||
-            !string.IsNullOrWhiteSpace(command.ShelfQrCode) ||
-            !string.IsNullOrWhiteSpace(command.BoxQrCode))
-        {
-            QrCode? roomQr = !string.IsNullOrWhiteSpace(command.RoomQrCode)
-                ? QrCode.Create(command.RoomQrCode)
-                : null;
-
-            QrCode? shelfQr = !string.IsNullOrWhiteSpace(command.ShelfQrCode)
-                ? QrCode.Create(command.ShelfQrCode)
-                : null;
-
-            QrCode? boxQr = !string.IsNullOrWhiteSpace(command.BoxQrCode)
-                ? QrCode.Create(command.BoxQrCode)
-                : null;
-
-            location = Location.Create(
-                command.RoomName, roomQr,
-                command.ShelfName, shelfQr,
-                command.BoxName, boxQr);
-        }
-
         // Create category reference
         var categoryId = command.CategoryId.HasValue
             ? CategoryId.From(command.CategoryId.Value)
+            : null;
+
+        var areaId = command.AreaId.HasValue
+            ? AreaId.From(command.AreaId.Value)
             : null;
 
         // Create the inventory item
@@ -69,7 +47,7 @@ public class CreateItemCommandHandler(IInventoryItemRepository itemRepository)
             ItemId.From(command.Id),
             basicInfo,
             financialInfo,
-            location,
+            areaId,
             categoryId
         );
 

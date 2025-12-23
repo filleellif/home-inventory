@@ -14,5 +14,17 @@ services:
       timeout: 5s
       retries: 5
 
+  seq:
+    image: datalust/seq
+    hostname: chronos-seq
+    ports:
+      - 11001:80
+    environment:
+      ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_NOAUTHENTICATION: True
+    volumes:
+      - seqdata:/data
+
 volumes:
   postgresdata:
+  seqdata:

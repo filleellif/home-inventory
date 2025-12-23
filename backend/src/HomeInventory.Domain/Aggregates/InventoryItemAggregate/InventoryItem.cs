@@ -1,3 +1,4 @@
+using HomeInventory.Domain.Aggregates.AreaAggregate;
 using HomeInventory.Domain.Aggregates.CategoryAggregate;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate.Events;
 using HomeInventory.Domain.Common;
@@ -12,7 +13,7 @@ public class InventoryItem : AggregateRoot<ItemId>
 
     public ItemBasicInfo BasicInfo { get; private set; }
     public FinancialInfo FinancialInfo { get; private set; }
-    public Location Location { get; private set; }
+    public AreaId? AreaId { get; private set; }
     public CategoryId? CategoryId { get; private set; }
 
     public IReadOnlyCollection<MediaReference> Photos => _photos.AsReadOnly();
@@ -26,20 +27,19 @@ public class InventoryItem : AggregateRoot<ItemId>
     {
         BasicInfo = default!;
         FinancialInfo = default!;
-        Location = default!;
     }
 
     private InventoryItem(
         ItemId id,
         ItemBasicInfo basicInfo,
         FinancialInfo? financialInfo,
-        Location? location,
+        AreaId? areaId,
         CategoryId? categoryId)
         : base(id)
     {
         BasicInfo = basicInfo ?? throw new ArgumentNullException(nameof(basicInfo));
         FinancialInfo = financialInfo ?? FinancialInfo.Empty();
-        Location = location ?? Location.Empty();
+        AreaId = areaId;
         CategoryId = categoryId;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
@@ -51,10 +51,10 @@ public class InventoryItem : AggregateRoot<ItemId>
         ItemId id,
         ItemBasicInfo basicInfo,
         FinancialInfo? financialInfo = null,
-        Location? location = null,
+        AreaId? areaId = null,
         CategoryId? categoryId = null)
     {
-        return new InventoryItem(id, basicInfo, financialInfo, location, categoryId);
+        return new InventoryItem(id, basicInfo, financialInfo, areaId, categoryId);
     }
 
     public void UpdateBasicInfo(ItemBasicInfo basicInfo)
@@ -71,9 +71,9 @@ public class InventoryItem : AggregateRoot<ItemId>
         AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
     }
 
-    public void UpdateLocation(Location location)
+    public void AssignArea(AreaId? areaId)
     {
-        Location = location ?? throw new ArgumentNullException(nameof(location));
+        AreaId = areaId;
         UpdatedAt = DateTime.UtcNow;
         AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
     }

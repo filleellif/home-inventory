@@ -1,4 +1,6 @@
 using HomeInventory.WebApi.Configuration;
+using Microsoft.VisualBasic;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -34,8 +36,8 @@ public static class ServiceCollectionExtensions
                     {
                         tracing.AddOtlpExporter(otlp =>
                         {
-                            otlp.Endpoint = new Uri(options.Exporters.Otlp.Endpoint);
-                            otlp.Protocol = OtlpExportProtocol.Grpc;
+                            otlp.Endpoint = new Uri($"{options.Exporters.Otlp.Endpoint}/ingest/otlp/v1/traces");
+                            otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                         });
                     }
                 });
@@ -60,7 +62,7 @@ public static class ServiceCollectionExtensions
                         metrics.AddOtlpExporter(otlp =>
                         {
                             otlp.Endpoint = new Uri(options.Exporters.Otlp.Endpoint);
-                            otlp.Protocol = OtlpExportProtocol.Grpc;
+                            otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                         });
                     }
                 });
@@ -74,6 +76,16 @@ public static class ServiceCollectionExtensions
                     if (options.Exporters.Console.Enabled)
                     {
                         logging.AddConsoleExporter();
+                    }
+
+                    if (options.Exporters.Otlp.Enabled && !string.IsNullOrEmpty(options.Exporters.Otlp.Endpoint))
+                    {
+                        logging.AddOtlpExporter(otlp =>
+                        {
+                            //otlp.Endpoint = new Uri(options.Exporters.Otlp.Endpoint);
+                            otlp.Endpoint = new Uri($"{options.Exporters.Otlp.Endpoint}/ingest/otlp/v1/logs");
+                            otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        });
                     }
                 });
         }

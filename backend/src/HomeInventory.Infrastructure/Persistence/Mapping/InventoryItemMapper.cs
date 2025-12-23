@@ -1,3 +1,4 @@
+using HomeInventory.Domain.Aggregates.AreaAggregate;
 using HomeInventory.Domain.Aggregates.CategoryAggregate;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate;
 using HomeInventory.Domain.Enums;
@@ -35,37 +36,11 @@ public static class InventoryItemMapper
         {
             financialInfo = FinancialInfo.Empty();
         }
-
-        // Reconstruct Location value object
-        Location location;
-        if (!string.IsNullOrWhiteSpace(model.RoomName) ||
-            !string.IsNullOrWhiteSpace(model.ShelfName) ||
-            !string.IsNullOrWhiteSpace(model.BoxName) ||
-            !string.IsNullOrWhiteSpace(model.RoomQrCode) ||
-            !string.IsNullOrWhiteSpace(model.ShelfQrCode) ||
-            !string.IsNullOrWhiteSpace(model.BoxQrCode))
-        {
-            QrCode? roomQr = !string.IsNullOrWhiteSpace(model.RoomQrCode)
-                ? QrCode.Create(model.RoomQrCode)
-                : null;
-
-            QrCode? shelfQr = !string.IsNullOrWhiteSpace(model.ShelfQrCode)
-                ? QrCode.Create(model.ShelfQrCode)
-                : null;
-
-            QrCode? boxQr = !string.IsNullOrWhiteSpace(model.BoxQrCode)
-                ? QrCode.Create(model.BoxQrCode)
-                : null;
-
-            location = Location.Create(
-                model.RoomName, roomQr,
-                model.ShelfName, shelfQr,
-                model.BoxName, boxQr);
-        }
-        else
-        {
-            location = Location.Empty();
-        }
+        
+        // Reconstruct AreaId
+        var areaId = model.AreaId.HasValue
+            ? AreaId.From(model.AreaId.Value)
+            : null;
 
         // Reconstruct CategoryId
         var categoryId = model.CategoryId.HasValue
@@ -77,7 +52,7 @@ public static class InventoryItemMapper
             ItemId.From(model.Id),
             basicInfo,
             financialInfo,
-            location,
+            areaId,
             categoryId
         );
 
@@ -134,15 +109,8 @@ public static class InventoryItemMapper
             CurrentValueAmount = domain.FinancialInfo.CurrentValue?.Amount,
             CurrentValueCurrency = domain.FinancialInfo.CurrentValue?.Currency,
             PurchaseDate = domain.FinancialInfo.PurchaseDate,
-
-            // Location flattened
-            RoomName = domain.Location.RoomName,
-            RoomQrCode = domain.Location.RoomQrCode?.Code,
-            ShelfName = domain.Location.ShelfName,
-            ShelfQrCode = domain.Location.ShelfQrCode?.Code,
-            BoxName = domain.Location.BoxName,
-            BoxQrCode = domain.Location.BoxQrCode?.Code,
-
+            
+            AreaId = domain.AreaId?.Value,
             CategoryId = domain.CategoryId?.Value,
 
             CreatedAt = domain.CreatedAt,

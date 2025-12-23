@@ -1,3 +1,4 @@
+using HomeInventory.Domain.Aggregates.AreaAggregate;
 using HomeInventory.Domain.Aggregates.CategoryAggregate;
 using HomeInventory.Domain.Aggregates.InventoryItemAggregate;
 using HomeInventory.Domain.Common;
@@ -35,24 +36,9 @@ public class UpdateItemCommandHandler(IInventoryItemRepository itemRepository)
         item.UpdateFinancialInfo(financialInfo);
 
         // Update location
-        QrCode? roomQr = !string.IsNullOrWhiteSpace(command.RoomQrCode)
-            ? QrCode.Create(command.RoomQrCode)
-            : null;
-
-        QrCode? shelfQr = !string.IsNullOrWhiteSpace(command.ShelfQrCode)
-            ? QrCode.Create(command.ShelfQrCode)
-            : null;
-
-        QrCode? boxQr = !string.IsNullOrWhiteSpace(command.BoxQrCode)
-            ? QrCode.Create(command.BoxQrCode)
-            : null;
-
-        var location = Location.Create(
-            command.RoomName, roomQr,
-            command.ShelfName, shelfQr,
-            command.BoxName, boxQr);
-        item.UpdateLocation(location);
-
+        var areaId = command.AreaId.HasValue ? AreaId.From(command.AreaId.Value) : null;
+        item.AssignArea(areaId);
+        
         // Update category
         var categoryId = command.CategoryId.HasValue ? CategoryId.From(command.CategoryId.Value) : null;
         item.AssignCategory(categoryId);

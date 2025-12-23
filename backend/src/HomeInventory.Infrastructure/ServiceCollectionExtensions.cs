@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         // Repositories
         services.AddScoped<IInventoryItemRepository, InventoryItemRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IAreaRepository, AreaRepository>();
 
         // File Storage
         // var storagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");

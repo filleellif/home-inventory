@@ -79,14 +79,12 @@
       <div class="space-y-6">
         <!-- Room -->
         <div class="space-y-3">
-          <h4 class="text-sm font-medium text-gray-700">Room</h4>
           <div class="space-y-3">
-            <BaseInput
-              v-model="form.roomName"
-              label="Room Name"
-              placeholder="e.g., Basement, Garage"
-            />
-            <div class="flex gap-2">
+          <AreaSelect
+            v-model="form.areaId"
+            label="Area"
+          />
+            <!-- <div class="flex gap-2">
               <BaseInput
                 v-model="form.roomQrCode"
                 label="Room QR Code"
@@ -100,67 +98,11 @@
               >
                 <CameraIcon class="h-5 w-5" />
               </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Shelf (Optional) -->
-        <div class="space-y-3">
-          <h4 class="text-sm font-medium text-gray-700">Shelf (Optional)</h4>
-          <div class="space-y-3">
-            <BaseInput
-              v-model="form.shelfName"
-              label="Shelf Name"
-              placeholder="e.g., Top Shelf, Unit A"
-            />
-            <div class="flex gap-2">
-              <BaseInput
-                v-model="form.shelfQrCode"
-                label="Shelf QR Code"
-                placeholder="Scan or enter code"
-                class="flex-1"
-              />
-              <button
-                type="button"
-                class="mt-6 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                @click="openScanner('shelf')"
-              >
-                <CameraIcon class="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Box (Optional) -->
-        <div class="space-y-3">
-          <h4 class="text-sm font-medium text-gray-700">Box (Optional)</h4>
-          <div class="space-y-3">
-            <BaseInput
-              v-model="form.boxName"
-              label="Box Name"
-              placeholder="e.g., Electronics Box, Tools"
-            />
-            <div class="flex gap-2">
-              <BaseInput
-                v-model="form.boxQrCode"
-                label="Box QR Code"
-                placeholder="Scan or enter code"
-                class="flex-1"
-              />
-              <button
-                type="button"
-                class="mt-6 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                @click="openScanner('box')"
-              >
-                <CameraIcon class="h-5 w-5" />
-              </button>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
     </BaseCard>
-
-    <QrScanner :open="scannerOpen" @close="scannerOpen = false" @scan="handleQrScan" />
 
     <div class="flex justify-end gap-3">
       <BaseButton type="button" variant="secondary" @click="$emit('cancel')">
@@ -198,33 +140,11 @@ const form = ref<CreateItemDto>({
   currentValue: props.initialData?.currentValue,
   currentValueCurrency: props.initialData?.currentValueCurrency || 'USD',
   purchaseDate: props.initialData?.purchaseDate,
-  roomName: props.initialData?.roomName || '',
-  roomQrCode: props.initialData?.roomQrCode || '',
-  shelfName: props.initialData?.shelfName || '',
-  shelfQrCode: props.initialData?.shelfQrCode || '',
-  boxName: props.initialData?.boxName || '',
-  boxQrCode: props.initialData?.boxQrCode || '',
+  areaId: props.initialData?.areaId,
   categoryId: props.initialData?.categoryId
 })
 
 const errors = ref<Record<string, string>>({})
-const scannerOpen = ref(false)
-const scanningFor = ref<'room' | 'shelf' | 'box'>('room')
-
-const openScanner = (level: 'room' | 'shelf' | 'box') => {
-  scanningFor.value = level
-  scannerOpen.value = true
-}
-
-const handleQrScan = (qrCode: string) => {
-  if (scanningFor.value === 'room') {
-    form.value.roomQrCode = qrCode
-  } else if (scanningFor.value === 'shelf') {
-    form.value.shelfQrCode = qrCode
-  } else if (scanningFor.value === 'box') {
-    form.value.boxQrCode = qrCode
-  }
-}
 
 const validate = () => {
   errors.value = {}

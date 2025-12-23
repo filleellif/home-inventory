@@ -108,34 +108,6 @@ public class ItemsController(
     }
 
     /// <summary>
-    /// Get items by QR code
-    /// </summary>
-    [HttpGet("by-qrcode/{qrCode}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetByQrCode(string qrCode)
-    {
-        logger.LogInformation("Fetching items with QR code: {QrCode}", qrCode);
-
-        var items = await itemQueries.GetByQrCodeAsync(qrCode);
-
-        return Ok(items);
-    }
-
-    /// <summary>
-    /// Generate a new QR code
-    /// </summary>
-    [HttpPost("generate-qr")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult GenerateQrCode()
-    {
-        var qrCode = Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
-
-        logger.LogInformation("Generated QR code: {QrCode}", qrCode);
-
-        return Ok(new { qrCode });
-    }
-
-    /// <summary>
     /// Generate a printable QR code label
     /// </summary>
     [HttpGet("qr-label/{qrCode}")]
