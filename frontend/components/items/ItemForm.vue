@@ -76,68 +76,91 @@
 
     <BaseCard>
       <h3 class="text-lg font-medium text-gray-900 mb-4">Location</h3>
-      <div class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <BaseInput
-            v-model="form.room"
-            label="Room"
-          />
-
-          <BaseInput
-            v-model="form.storageSpot"
-            label="Storage Spot"
-          />
+      <div class="space-y-6">
+        <!-- Room -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-medium text-gray-700">Room</h4>
+          <div class="space-y-3">
+            <BaseInput
+              v-model="form.roomName"
+              label="Room Name"
+              placeholder="e.g., Basement, Garage"
+            />
+            <div class="flex gap-2">
+              <BaseInput
+                v-model="form.roomQrCode"
+                label="Room QR Code"
+                placeholder="Scan or enter code"
+                class="flex-1"
+              />
+              <button
+                type="button"
+                class="mt-6 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="openScanner('room')"
+              >
+                <CameraIcon class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <BaseInput
-            v-model.number="form.gpsLatitude"
-            label="GPS Latitude"
-            type="number"
-            step="any"
-          />
+        <!-- Shelf (Optional) -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-medium text-gray-700">Shelf (Optional)</h4>
+          <div class="space-y-3">
+            <BaseInput
+              v-model="form.shelfName"
+              label="Shelf Name"
+              placeholder="e.g., Top Shelf, Unit A"
+            />
+            <div class="flex gap-2">
+              <BaseInput
+                v-model="form.shelfQrCode"
+                label="Shelf QR Code"
+                placeholder="Scan or enter code"
+                class="flex-1"
+              />
+              <button
+                type="button"
+                class="mt-6 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="openScanner('shelf')"
+              >
+                <CameraIcon class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
 
-          <BaseInput
-            v-model.number="form.gpsLongitude"
-            label="GPS Longitude"
-            type="number"
-            step="any"
-          />
+        <!-- Box (Optional) -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-medium text-gray-700">Box (Optional)</h4>
+          <div class="space-y-3">
+            <BaseInput
+              v-model="form.boxName"
+              label="Box Name"
+              placeholder="e.g., Electronics Box, Tools"
+            />
+            <div class="flex gap-2">
+              <BaseInput
+                v-model="form.boxQrCode"
+                label="Box QR Code"
+                placeholder="Scan or enter code"
+                class="flex-1"
+              />
+              <button
+                type="button"
+                class="mt-6 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="openScanner('box')"
+              >
+                <CameraIcon class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </BaseCard>
 
-    <BaseCard>
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Tags</h3>
-      <div>
-        <div v-if="form.tags.length > 0" class="flex gap-2 flex-wrap mb-4">
-          <span
-            v-for="(tag, index) in form.tags"
-            :key="index"
-            class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-          >
-            {{ tag }}
-            <button
-              type="button"
-              @click="removeTag(index)"
-              class="ml-2 text-blue-600 hover:text-blue-800"
-            >
-              ×
-            </button>
-          </span>
-        </div>
-        <div class="flex gap-2">
-          <BaseInput
-            v-model="newTag"
-            placeholder="Add tag..."
-            @keyup.enter="addTag"
-          />
-          <BaseButton type="button" variant="secondary" @click="addTag">
-            Add
-          </BaseButton>
-        </div>
-      </div>
-    </BaseCard>
+    <QrScanner :open="scannerOpen" @close="scannerOpen = false" @scan="handleQrScan" />
 
     <div class="flex justify-end gap-3">
       <BaseButton type="button" variant="secondary" @click="$emit('cancel')">
@@ -152,6 +175,8 @@
 
 <script setup lang="ts">
 import type { ItemDto, CreateItemDto } from '~/types/item'
+import { CameraIcon } from '@heroicons/vue/24/outline'
+import QrScanner from '~/components/qr/QrScanner.vue'
 
 interface Props {
   initialData?: ItemDto
@@ -173,26 +198,32 @@ const form = ref<CreateItemDto>({
   currentValue: props.initialData?.currentValue,
   currentValueCurrency: props.initialData?.currentValueCurrency || 'USD',
   purchaseDate: props.initialData?.purchaseDate,
-  room: props.initialData?.room || '',
-  storageSpot: props.initialData?.storageSpot || '',
-  gpsLatitude: props.initialData?.gpsLatitude,
-  gpsLongitude: props.initialData?.gpsLongitude,
-  categoryId: props.initialData?.categoryId,
-  tags: props.initialData?.tags || []
+  roomName: props.initialData?.roomName || '',
+  roomQrCode: props.initialData?.roomQrCode || '',
+  shelfName: props.initialData?.shelfName || '',
+  shelfQrCode: props.initialData?.shelfQrCode || '',
+  boxName: props.initialData?.boxName || '',
+  boxQrCode: props.initialData?.boxQrCode || '',
+  categoryId: props.initialData?.categoryId
 })
 
 const errors = ref<Record<string, string>>({})
-const newTag = ref('')
+const scannerOpen = ref(false)
+const scanningFor = ref<'room' | 'shelf' | 'box'>('room')
 
-const addTag = () => {
-  if (newTag.value.trim() && !form.value.tags.includes(newTag.value.trim())) {
-    form.value.tags.push(newTag.value.trim())
-    newTag.value = ''
-  }
+const openScanner = (level: 'room' | 'shelf' | 'box') => {
+  scanningFor.value = level
+  scannerOpen.value = true
 }
 
-const removeTag = (index: number) => {
-  form.value.tags.splice(index, 1)
+const handleQrScan = (qrCode: string) => {
+  if (scanningFor.value === 'room') {
+    form.value.roomQrCode = qrCode
+  } else if (scanningFor.value === 'shelf') {
+    form.value.shelfQrCode = qrCode
+  } else if (scanningFor.value === 'box') {
+    form.value.boxQrCode = qrCode
+  }
 }
 
 const validate = () => {

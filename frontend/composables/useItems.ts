@@ -20,7 +20,7 @@ export const useItems = () => {
     // Add filters to query (server-side filtering to be implemented)
     if (filters?.search) query.search = filters.search
     if (filters?.categoryId) query.categoryId = filters.categoryId
-    if (filters?.room) query.room = filters.room
+    if (filters?.qrCode) query.qrCode = filters.qrCode
 
     const { data, error, pending, refresh } = await apiFetch<PaginatedList<ItemDto>>(
       '/items',
@@ -38,6 +38,18 @@ export const useItems = () => {
     const { data, error, pending } = await apiFetch<ItemDto>(`/items/${id}`, {
       key: `item-${id}`
     })
+
+    return { data, error, pending }
+  }
+
+  // Fetch items by QR code
+  const fetchItemsByQrCode = async (qrCode: string) => {
+    const { data, error, pending } = await apiFetch<ItemDto[]>(
+      `/items/by-qrcode/${encodeURIComponent(qrCode)}`,
+      {
+        key: `items-qr-${qrCode}`
+      }
+    )
 
     return { data, error, pending }
   }
@@ -107,6 +119,7 @@ export const useItems = () => {
   return {
     fetchItems,
     fetchItem,
+    fetchItemsByQrCode,
     createItem,
     updateItem,
     deleteItem,

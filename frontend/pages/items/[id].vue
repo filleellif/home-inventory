@@ -57,25 +57,22 @@
           <dd class="mt-1 text-sm text-gray-900">{{ formatDate(item.purchaseDate) }}</dd>
         </div>
 
-        <div v-if="item.room">
-          <dt class="text-sm font-medium text-gray-500">Room</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ item.room }}</dd>
+        <div v-if="formatLocation(item)" class="sm:col-span-2">
+          <dt class="text-sm font-medium text-gray-500">Location</dt>
+          <dd class="mt-1 text-sm text-gray-900">{{ formatLocation(item) }}</dd>
         </div>
 
-        <div v-if="item.storageSpot">
-          <dt class="text-sm font-medium text-gray-500">Storage Spot</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ item.storageSpot }}</dd>
-        </div>
-
-        <div v-if="item.tags.length > 0">
-          <dt class="text-sm font-medium text-gray-500">Tags</dt>
-          <dd class="mt-1 flex flex-wrap gap-2">
-            <span
-              v-for="tag in item.tags"
-              :key="tag"
-              class="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800"
-            >
-              {{ tag }}
+        <div v-if="item.roomQrCode || item.shelfQrCode || item.boxQrCode" class="sm:col-span-2">
+          <dt class="text-sm font-medium text-gray-500">QR Codes</dt>
+          <dd class="mt-1 flex flex-wrap gap-3">
+            <span v-if="item.roomQrCode" class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-900 font-mono">
+              Room: {{ item.roomQrCode }}
+            </span>
+            <span v-if="item.shelfQrCode" class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-900 font-mono">
+              Shelf: {{ item.shelfQrCode }}
+            </span>
+            <span v-if="item.boxQrCode" class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-900 font-mono">
+              Box: {{ item.boxQrCode }}
             </span>
           </dd>
         </div>
@@ -116,6 +113,14 @@ const getCategoryName = (categoryId: string) => {
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString()
+}
+
+const formatLocation = (item: any) => {
+  const parts = []
+  if (item.roomName) parts.push(`Room: ${item.roomName}`)
+  if (item.shelfName) parts.push(`Shelf: ${item.shelfName}`)
+  if (item.boxName) parts.push(`Box: ${item.boxName}`)
+  return parts.length > 0 ? parts.join(' > ') : null
 }
 
 const handleDelete = async () => {
