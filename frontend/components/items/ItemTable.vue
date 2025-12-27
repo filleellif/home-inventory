@@ -31,9 +31,6 @@
               Quantity
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Value
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Location
             </th>
             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -56,9 +53,6 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ item.quantity }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ formatCurrency(item.currentValue, item.currentValueCurrency) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ item.room || '-' }}
@@ -108,10 +102,5 @@ const getCategoryName = (categoryId?: string) => {
   if (!categoryId) return '-'
   const category = props.categories.find(c => c.id === categoryId)
   return category?.name || '-'
-}
-
-const formatCurrency = (value?: number, currency?: string) => {
-  if (!value) return '-'
-  return `${currency || '$'}${value.toFixed(2)}`
 }
 </script>

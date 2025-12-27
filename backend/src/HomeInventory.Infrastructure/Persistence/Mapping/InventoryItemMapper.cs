@@ -18,25 +18,6 @@ public static class InventoryItemMapper
             model.Quantity
         );
 
-        // Reconstruct FinancialInfo value object
-        FinancialInfo financialInfo;
-        if (model.PurchasePriceAmount.HasValue || model.CurrentValueAmount.HasValue || model.PurchaseDate.HasValue)
-        {
-            Money? purchasePrice = model.PurchasePriceAmount.HasValue
-                ? Money.Create(model.PurchasePriceAmount.Value, model.PurchasePriceCurrency ?? "USD")
-                : null;
-
-            Money? currentValue = model.CurrentValueAmount.HasValue
-                ? Money.Create(model.CurrentValueAmount.Value, model.CurrentValueCurrency ?? "USD")
-                : null;
-
-            financialInfo = FinancialInfo.Create(purchasePrice, currentValue, model.PurchaseDate);
-        }
-        else
-        {
-            financialInfo = FinancialInfo.Empty();
-        }
-        
         // Reconstruct AreaId
         var areaId = model.AreaId.HasValue
             ? AreaId.From(model.AreaId.Value)
@@ -51,7 +32,6 @@ public static class InventoryItemMapper
         var item = InventoryItem.Create(
             ItemId.From(model.Id),
             basicInfo,
-            financialInfo,
             areaId,
             categoryId
         );
@@ -103,13 +83,6 @@ public static class InventoryItemMapper
             Description = domain.BasicInfo.Description,
             Quantity = domain.BasicInfo.Quantity,
 
-            // FinancialInfo flattened
-            PurchasePriceAmount = domain.FinancialInfo.PurchasePrice?.Amount,
-            PurchasePriceCurrency = domain.FinancialInfo.PurchasePrice?.Currency,
-            CurrentValueAmount = domain.FinancialInfo.CurrentValue?.Amount,
-            CurrentValueCurrency = domain.FinancialInfo.CurrentValue?.Currency,
-            PurchaseDate = domain.FinancialInfo.PurchaseDate,
-            
             AreaId = domain.AreaId?.Value,
             CategoryId = domain.CategoryId?.Value,
 

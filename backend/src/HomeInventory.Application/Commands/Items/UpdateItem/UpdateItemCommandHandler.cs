@@ -23,18 +23,6 @@ public class UpdateItemCommandHandler(IInventoryItemRepository itemRepository)
         var basicInfo = ItemBasicInfo.Create(command.Name, command.Description, command.Quantity);
         item.UpdateBasicInfo(basicInfo);
 
-        // Update financial info
-        var purchasePrice = command.PurchasePrice.HasValue
-            ? Money.Create(command.PurchasePrice.Value, command.PurchaseCurrency ?? "USD")
-            : null;
-
-        var currentValue = command.CurrentValue.HasValue
-            ? Money.Create(command.CurrentValue.Value, command.CurrentValueCurrency ?? "USD")
-            : null;
-
-        var financialInfo = FinancialInfo.Create(purchasePrice, currentValue, command.PurchaseDate);
-        item.UpdateFinancialInfo(financialInfo);
-
         // Update location
         var areaId = command.AreaId.HasValue ? AreaId.From(command.AreaId.Value) : null;
         item.AssignArea(areaId);

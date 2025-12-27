@@ -5,7 +5,7 @@
       <p class="mt-2 text-gray-600">Overview of your home inventory</p>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <BaseCard>
         <div class="text-sm font-medium text-gray-500">Total Items</div>
         <div class="mt-2 text-3xl font-semibold text-primary-600">
@@ -17,13 +17,6 @@
         <div class="text-sm font-medium text-gray-500">Categories</div>
         <div class="mt-2 text-3xl font-semibold text-primary-600">
           {{ stats.totalCategories }}
-        </div>
-      </BaseCard>
-
-      <BaseCard>
-        <div class="text-sm font-medium text-gray-500">Total Value</div>
-        <div class="mt-2 text-3xl font-semibold text-primary-600">
-          ${{ stats.totalValue.toFixed(2) }}
         </div>
       </BaseCard>
 
@@ -74,9 +67,6 @@
             </p>
             <div class="mt-3 flex items-center justify-between text-sm">
               <span class="text-gray-500">Qty: {{ item.quantity }}</span>
-              <span v-if="item.currentValue" class="font-medium text-primary-600">
-                {{ item.currentValueCurrency || '$' }}{{ item.currentValue.toFixed(2) }}
-              </span>
             </div>
           </BaseCard>
         </div>
@@ -140,7 +130,6 @@ const stats = computed(() => {
   const items = itemsData.value?.items || []
   const totalItems = itemsData.value?.totalCount || 0
   const totalCategories = categories.value.length
-  const totalValue = items.reduce((sum, item) => sum + (item.currentValue || 0), 0)
   const lastUpdated = items.length > 0
     ? new Date(Math.max(...items.map(i => new Date(i.updatedAt).getTime()))).toLocaleDateString()
     : 'N/A'
@@ -148,7 +137,6 @@ const stats = computed(() => {
   return {
     totalItems,
     totalCategories,
-    totalValue,
     lastUpdated
   }
 })

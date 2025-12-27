@@ -12,25 +12,5 @@ public class CreateItemCommandValidator : AbstractValidator<CreateItemCommand>
 
         RuleFor(x => x.Quantity)
             .GreaterThan(0).WithMessage("Quantity must be greater than zero.");
-
-        RuleFor(x => x.PurchasePrice)
-            .GreaterThanOrEqualTo(0).When(x => x.PurchasePrice.HasValue)
-            .WithMessage("Purchase price cannot be negative.");
-
-        RuleFor(x => x.CurrentValue)
-            .GreaterThanOrEqualTo(0).When(x => x.CurrentValue.HasValue)
-            .WithMessage("Current value cannot be negative.");
-
-        RuleFor(x => x.PurchaseCurrency)
-            .Length(3).When(x => !string.IsNullOrWhiteSpace(x.PurchaseCurrency))
-            .WithMessage("Currency must be a 3-letter code (e.g., USD, EUR).");
-
-        RuleFor(x => x.CurrentValueCurrency)
-            .Length(3).When(x => !string.IsNullOrWhiteSpace(x.CurrentValueCurrency))
-            .WithMessage("Currency must be a 3-letter code (e.g., USD, EUR).");
-
-        RuleFor(x => x.PurchaseDate)
-            .LessThanOrEqualTo(DateTime.UtcNow).When(x => x.PurchaseDate.HasValue)
-            .WithMessage("Purchase date cannot be in the future.");
     }
 }

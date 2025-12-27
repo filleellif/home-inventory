@@ -9,13 +9,6 @@ public class InventoryItemModel
     public string? Description { get; init; }
     public int Quantity { get; init; }
 
-    // FinancialInfo flattened
-    public decimal? PurchasePriceAmount { get; init; }
-    public string? PurchasePriceCurrency { get; init; }
-    public decimal? CurrentValueAmount { get; init; }
-    public string? CurrentValueCurrency { get; init; }
-    public DateTime? PurchaseDate { get; init; }
-
     // Location flattened
     public Guid? AreaId { get; init; }
 

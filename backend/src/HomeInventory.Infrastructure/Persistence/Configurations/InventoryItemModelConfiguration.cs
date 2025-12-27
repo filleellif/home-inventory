@@ -30,26 +30,6 @@ public class InventoryItemModelConfiguration : IEntityTypeConfiguration<Inventor
             .HasColumnName("quantity")
             .IsRequired();
 
-        // FinancialInfo properties (flattened)
-        builder.Property(x => x.PurchasePriceAmount)
-            .HasColumnName("purchase_price_amount")
-            .HasColumnType("decimal(18,2)");
-
-        builder.Property(x => x.PurchasePriceCurrency)
-            .HasColumnName("purchase_price_currency")
-            .HasMaxLength(3);
-
-        builder.Property(x => x.CurrentValueAmount)
-            .HasColumnName("current_value_amount")
-            .HasColumnType("decimal(18,2)");
-
-        builder.Property(x => x.CurrentValueCurrency)
-            .HasColumnName("current_value_currency")
-            .HasMaxLength(3);
-
-        builder.Property(x => x.PurchaseDate)
-            .HasColumnName("purchase_date");
-
         // AreaId
         builder.Property(x => x.AreaId)
             .HasColumnName("area_id");

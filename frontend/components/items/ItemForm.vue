@@ -34,47 +34,6 @@
     </BaseCard>
 
     <BaseCard>
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Financial Information</h3>
-      <div class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <BaseInput
-            v-model.number="form.purchasePrice"
-            label="Purchase Price"
-            type="number"
-            step="0.01"
-          />
-
-          <BaseInput
-            v-model="form.purchaseCurrency"
-            label="Currency"
-            placeholder="USD"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <BaseInput
-            v-model.number="form.currentValue"
-            label="Current Value"
-            type="number"
-            step="0.01"
-          />
-
-          <BaseInput
-            v-model="form.currentValueCurrency"
-            label="Currency"
-            placeholder="USD"
-          />
-        </div>
-
-        <BaseInput
-          v-model="form.purchaseDate"
-          label="Purchase Date"
-          type="date"
-        />
-      </div>
-    </BaseCard>
-
-    <BaseCard>
       <h3 class="text-lg font-medium text-gray-900 mb-4">Location</h3>
       <div class="space-y-6">
         <!-- Room -->
@@ -135,11 +94,6 @@ const form = ref<CreateItemDto>({
   name: props.initialData?.name || '',
   description: props.initialData?.description || '',
   quantity: props.initialData?.quantity || 1,
-  purchasePrice: props.initialData?.purchasePrice,
-  purchaseCurrency: props.initialData?.purchaseCurrency || 'USD',
-  currentValue: props.initialData?.currentValue,
-  currentValueCurrency: props.initialData?.currentValueCurrency || 'USD',
-  purchaseDate: props.initialData?.purchaseDate,
   areaId: props.initialData?.areaId,
   categoryId: props.initialData?.categoryId
 })

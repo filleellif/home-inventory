@@ -38,25 +38,6 @@
           <dd class="mt-1 text-sm text-gray-900">{{ getCategoryName(item.categoryId) }}</dd>
         </div>
 
-        <div v-if="item.purchasePrice">
-          <dt class="text-sm font-medium text-gray-500">Purchase Price</dt>
-          <dd class="mt-1 text-sm text-gray-900">
-            {{ item.purchaseCurrency || '$' }}{{ item.purchasePrice.toFixed(2) }}
-          </dd>
-        </div>
-
-        <div v-if="item.currentValue">
-          <dt class="text-sm font-medium text-gray-500">Current Value</dt>
-          <dd class="mt-1 text-sm text-gray-900">
-            {{ item.currentValueCurrency || '$' }}{{ item.currentValue.toFixed(2) }}
-          </dd>
-        </div>
-
-        <div v-if="item.purchaseDate">
-          <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ formatDate(item.purchaseDate) }}</dd>
-        </div>
-
         <div v-if="formatLocation(item)" class="sm:col-span-2">
           <dt class="text-sm font-medium text-gray-500">Location</dt>
           <dd class="mt-1 text-sm text-gray-900">{{ formatLocation(item) }}</dd>

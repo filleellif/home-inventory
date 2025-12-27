@@ -12,7 +12,6 @@ public class InventoryItem : AggregateRoot<ItemId>
     private readonly List<MediaReference> _receipts = new();
 
     public ItemBasicInfo BasicInfo { get; private set; }
-    public FinancialInfo FinancialInfo { get; private set; }
     public AreaId? AreaId { get; private set; }
     public CategoryId? CategoryId { get; private set; }
 
@@ -26,19 +25,16 @@ public class InventoryItem : AggregateRoot<ItemId>
     private InventoryItem() : base(default!)
     {
         BasicInfo = default!;
-        FinancialInfo = default!;
     }
 
     private InventoryItem(
         ItemId id,
         ItemBasicInfo basicInfo,
-        FinancialInfo? financialInfo,
         AreaId? areaId,
         CategoryId? categoryId)
         : base(id)
     {
         BasicInfo = basicInfo ?? throw new ArgumentNullException(nameof(basicInfo));
-        FinancialInfo = financialInfo ?? FinancialInfo.Empty();
         AreaId = areaId;
         CategoryId = categoryId;
         CreatedAt = DateTime.UtcNow;
@@ -50,23 +46,15 @@ public class InventoryItem : AggregateRoot<ItemId>
     public static InventoryItem Create(
         ItemId id,
         ItemBasicInfo basicInfo,
-        FinancialInfo? financialInfo = null,
         AreaId? areaId = null,
         CategoryId? categoryId = null)
     {
-        return new InventoryItem(id, basicInfo, financialInfo, areaId, categoryId);
+        return new InventoryItem(id, basicInfo, areaId, categoryId);
     }
 
     public void UpdateBasicInfo(ItemBasicInfo basicInfo)
     {
         BasicInfo = basicInfo ?? throw new ArgumentNullException(nameof(basicInfo));
-        UpdatedAt = DateTime.UtcNow;
-        AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
-    }
-
-    public void UpdateFinancialInfo(FinancialInfo financialInfo)
-    {
-        FinancialInfo = financialInfo ?? throw new ArgumentNullException(nameof(financialInfo));
         UpdatedAt = DateTime.UtcNow;
         AddDomainEvent(new ItemUpdated(Id, DateTime.UtcNow));
     }

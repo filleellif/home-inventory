@@ -7,12 +7,6 @@ public class ItemReadModel
     public string? Description { get; init; }
     public int Quantity { get; init; }
 
-    public decimal? PurchasePriceAmount { get; init; }
-    public string? PurchasePriceCurrency { get; init; }
-    public decimal? CurrentValueAmount { get; init; }
-    public string? CurrentValueCurrency { get; init; }
-    public DateTime? PurchaseDate { get; init; }
-
     public Guid? AreaId { get; init; }
 
     public Guid? CategoryId { get; init; }
