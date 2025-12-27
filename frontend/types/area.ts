@@ -20,3 +20,7 @@ export interface CreateAreaDto {
 export interface UpdateAreaDto extends CreateAreaDto {
   id: string
 }
+
+export interface AreaTreeNode extends AreaDto {
+  children: AreaTreeNode[]
+}

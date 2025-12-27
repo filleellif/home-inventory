@@ -1,4 +1,4 @@
-import type { AreaDto, CreateAreaDto, UpdateAreaDto } from '~/types/area'
+import type { AreaDto, CreateAreaDto, UpdateAreaDto, AreaTreeNode } from '~/types/area'
 
 export const useAreas = () => {
   const { apiFetch } = useApi()
@@ -54,6 +54,9 @@ export const useAreas = () => {
         return { success: false, error: error.value }
       }
 
+      // Invalidate the areas cache to ensure the list is refreshed
+      refreshNuxtData('areas')
+
       toast.success('Area created successfully')
       return { success: true, data: data.value }
     } catch (err) {
@@ -75,6 +78,10 @@ export const useAreas = () => {
         return { success: false, error: error.value }
       }
 
+      // Invalidate the areas cache to ensure the list is refreshed
+      refreshNuxtData('areas')
+      refreshNuxtData(`area-${id}`)
+
       toast.success('Area updated successfully')
       return { success: true }
     } catch (err) {
@@ -95,12 +102,40 @@ export const useAreas = () => {
         return { success: false, error: error.value }
       }
 
+      // Invalidate the areas cache to ensure the list is refreshed
+      refreshNuxtData('areas')
+
       toast.success('Area deleted successfully')
       return { success: true }
     } catch (err) {
       toast.error('Failed to delete area')
       return { success: false, error: err }
     }
+  }
+
+  // Helper: Build area tree for hierarchical display
+  const buildAreaTree = (areas: AreaDto[]): AreaTreeNode[] => {
+    const areaMap = new Map(
+      areas.map(area => [area.id, { ...area, children: [] as AreaTreeNode[] }])
+    )
+    const rootAreas: AreaTreeNode[] = []
+
+    areas.forEach(area => {
+      const areaWithChildren = areaMap.get(area.id)!
+
+      if (area.parentAreaId) {
+        const parent = areaMap.get(area.parentAreaId)
+        if (parent) {
+          parent.children.push(areaWithChildren)
+        } else {
+          rootAreas.push(areaWithChildren)
+        }
+      } else {
+        rootAreas.push(areaWithChildren)
+      }
+    })
+
+    return rootAreas
   }
 
   return {
@@ -110,5 +145,6 @@ export const useAreas = () => {
     createArea,
     updateArea,
     deleteArea,
+    buildAreaTree,
   }
 }

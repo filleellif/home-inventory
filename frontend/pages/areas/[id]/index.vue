@@ -39,11 +39,6 @@
           </div>
 
           <div>
-            <dt class="text-sm font-medium text-gray-500">QR Code</dt>
-            <dd class="mt-1 text-sm text-gray-900 font-mono">{{ area.id }}</dd>
-          </div>
-
-          <div>
             <dt class="text-sm font-medium text-gray-500">Items in Area</dt>
             <dd class="mt-1 text-sm text-gray-900">
               {{ area.itemCount }} {{ area.itemCount === 1 ? 'item' : 'items' }}
@@ -100,7 +95,6 @@ const formatDate = (date: string) => {
 }
 
 const renderQrCode = async () => {
-  console.log('Rendering QR code for', area.value?.id)
   if (!area.value?.id || !qrCanvas.value) return
 
   try {

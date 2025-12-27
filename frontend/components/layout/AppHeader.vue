@@ -21,6 +21,9 @@
           <NuxtLink to="/" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
             Dashboard
           </NuxtLink>
+          <NuxtLink to="/areas" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+            Areas
+          </NuxtLink>
           <NuxtLink to="/items" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
             Items
           </NuxtLink>
