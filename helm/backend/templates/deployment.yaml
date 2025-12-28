@@ -78,18 +78,6 @@ spec:
         - name: storage
           mountPath: {{ .Values.persistence.mountPath }}
         {{- end }}
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: http
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: http
-          initialDelaySeconds: 10
-          periodSeconds: 5
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
       volumes:

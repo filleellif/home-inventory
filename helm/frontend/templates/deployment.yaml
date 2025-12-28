@@ -44,18 +44,6 @@ spec:
             configMapKeyRef:
               name: {{ include "home-inventory-frontend.fullname" . }}
               key: apiUrl
-        livenessProbe:
-          httpGet:
-            path: /
-            port: http
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: http
-          initialDelaySeconds: 10
-          periodSeconds: 5
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
