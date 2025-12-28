@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "home-inventory-frontend.fullname" . }}
+  labels:
+    {{- include "home-inventory-frontend.labels" . | nindent 4 }}
+data:
+  apiUrl: {{ .Values.config.apiUrl | quote }}

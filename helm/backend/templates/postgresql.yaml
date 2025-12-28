@@ -1,0 +1,32 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: {{ .Values.postgresql.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "home-inventory-backend.labels" . | nindent 4 }}
+    team: {{ .Values.postgresql.teamId }}
+spec:
+  teamId: {{ .Values.postgresql.teamId | quote }}
+  postgresql:
+    version: {{ .Values.postgresql.version | quote }}
+  numberOfInstances: {{ .Values.postgresql.numberOfInstances }}
+  volume:
+    size: {{ .Values.postgresql.volume.size | quote }}
+    {{- if .Values.postgresql.volume.storageClass }}
+    storageClass: {{ .Values.postgresql.volume.storageClass | quote }}
+    {{- end }}
+  users:
+    {{ .Values.postgresql.database }}:
+    - superuser
+    - createdb
+  databases:
+    {{ .Values.postgresql.database }}: {{ .Values.postgresql.database }}
+  resources:
+    {{- toYaml .Values.postgresql.resources | nindent 4 }}
+  {{- if .Values.postgresql.maintenanceWindows }}
+  maintenanceWindows:
+    {{- toYaml .Values.postgresql.maintenanceWindows | nindent 4 }}
+  {{- end }}
+{{- end }}
