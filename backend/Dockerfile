@@ -21,12 +21,15 @@ RUN dotnet build "HomeInventory.WebApi.csproj" -c Release -o /app/build
 
 # Publish stage
 FROM build AS publish
+ARG TARGETARCH
 RUN dotnet publish "HomeInventory.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Generate EF Core migration bundle
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="${PATH}:/root/.dotnet/tools"
-RUN dotnet ef migrations bundle --self-contained -r linux-x64 -o /app/efbundle
+# Build migration bundle for the target architecture (arm64 for Raspberry Pi, amd64 for x86)
+RUN RUNTIME_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "linux-arm64" || echo "linux-x64") && \
+    dotnet ef migrations bundle --self-contained -r $RUNTIME_ARCH -o /app/efbundle
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
