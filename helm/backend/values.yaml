@@ -25,15 +25,19 @@ service:
   port: 8080
 
 ingress:
-  enabled: false
+  enabled: true
   className: ""
-  annotations: {}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
   hosts:
-    - host: api.home-inventory.local
+    - host: api.inventory.kristoffer.codes
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  tls:
+    - secretName: api-inventory-kristoffer-codes-tls
+      hosts:
+        - api.inventory.kristoffer.codes
 
 resources:
   limits:

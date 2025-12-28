@@ -62,7 +62,7 @@ affinity: {}
 # Application configuration
 config:
   # Backend API URL
-  apiUrl: "http://home-inventory-backend:8080"
+  apiUrl: "https://api.inventory.kristoffer.codes"
 
   # Public runtime config for Nuxt
   publicRuntimeConfig:
