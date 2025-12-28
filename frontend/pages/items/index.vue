@@ -49,9 +49,14 @@ const filters = ref<ItemFilters>({})
 const { data: categoriesData } = await fetchCategories()
 const categories = computed(() => categoriesData.value || [])
 
-// Fetch items with search query from filters
+// Fetch items with search query and category from filters
 const fetchWithFilters = async () => {
-  return await fetchItems(filters.value.search || '', currentPage.value, 20)
+  return await fetchItems(
+    filters.value.search || '',
+    filters.value.categoryId,
+    currentPage.value,
+    20
+  )
 }
 
 const { data: items, pending, refresh } = await fetchWithFilters()

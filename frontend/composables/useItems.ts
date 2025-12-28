@@ -9,6 +9,7 @@ export const useItems = () => {
   // Fetch paginated items
   const fetchItems = async (
     searchQuery = '',
+    categoryId: string | undefined = undefined,
     pageNumber = 1,
     pageSize = 20
   ) => {
@@ -18,12 +19,17 @@ export const useItems = () => {
       pageSize,
     }
 
-    // Add filters to query (server-side filtering to be implemented)
+    // Add categoryId to query if provided
+    if (categoryId) {
+      query.categoryId = categoryId
+    }
+
+    const cacheKey = `items-${searchQuery}-${categoryId || 'all'}-${pageNumber}-${pageSize}`
     const { data, error, pending, refresh } = await apiFetch<PaginatedList<ItemDto>>(
       '/items',
       {
         query,
-        key: `items-${searchQuery}-${pageNumber}-${pageSize}`
+        key: cacheKey
       }
     )
 

@@ -51,6 +51,7 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
 
     public async Task<(List<ItemListReadModel> Items, int TotalCount)> GetAllAsync(
         string searchQuery,
+        Guid? categoryId,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -60,6 +61,11 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
         if (!string.IsNullOrEmpty(searchQuery))
         {
             query = query.Where(item => EF.Functions.ILike(item.Name, $"%{searchQuery}%"));
+        }
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(item => item.CategoryId == categoryId.Value);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

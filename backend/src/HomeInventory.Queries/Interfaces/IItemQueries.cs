@@ -8,6 +8,7 @@ public interface IItemQueries
 
     Task<(List<ItemListReadModel> Items, int TotalCount)> GetAllAsync(
         string searchQuery,
+        Guid? categoryId,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);

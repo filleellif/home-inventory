@@ -120,7 +120,7 @@
 const { fetchItems } = useItems()
 const { fetchCategories } = useCategories()
 
-const { data: itemsData, pending } = await fetchItems('', 1, 6)
+const { data: itemsData, pending } = await fetchItems('', undefined, 1, 6)
 const { data: categoriesData } = await fetchCategories()
 
 const recentItems = computed(() => itemsData.value?.items || [])
