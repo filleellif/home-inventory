@@ -18,6 +18,9 @@
             <p v-if="area.description" class="mt-2 text-gray-600">{{ area.description }}</p>
           </div>
           <div class="flex gap-2">
+            <BaseButton @click="handleMoveClick">
+              Move
+            </BaseButton>
             <BaseButton variant="secondary" @click="navigateTo(`/areas/${id}/edit`)">
               Edit
             </BaseButton>
@@ -76,19 +79,43 @@
         Back to Areas
       </BaseButton>
     </div>
+
+    <MoveAreaModal
+      v-if="area"
+      :show="showMoveModal"
+      :area="areaAsTreeNode"
+      :all-areas="allAreas"
+      @close="showMoveModal = false"
+      @move="handleMove"
+    />
   </ClientOnly>
 </template>
 
 <script setup lang="ts">
 import QRCode from 'qrcode'
+import type { AreaTreeNode } from '~/types/area'
 
 const route = useRoute()
 const id = route.params.id as string
 
-const { fetchArea, deleteArea } = useAreas()
+const { fetchArea, fetchAreas, updateArea, deleteArea } = useAreas()
 
 const { data: area, pending } = await fetchArea(id)
+const { data: allAreasData } = await fetchAreas()
+
 const qrCanvas = ref<HTMLCanvasElement>()
+const showMoveModal = ref(false)
+
+const allAreas = computed(() => allAreasData.value || [])
+
+// Convert the area to a tree node format for the modal
+const areaAsTreeNode = computed((): AreaTreeNode | null => {
+  if (!area.value) return null
+  return {
+    ...area.value,
+    children: []
+  }
+})
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString()
@@ -132,6 +159,27 @@ const downloadQrLabel = async () => {
     URL.revokeObjectURL(blobUrl)
   } catch (err) {
     console.error('Failed to download label:', err)
+  }
+}
+
+const handleMoveClick = () => {
+  showMoveModal.value = true
+}
+
+const handleMove = async (areaId: string, newParentId: string | null) => {
+  if (!area.value) return
+
+  const result = await updateArea(areaId, {
+    id: areaId,
+    name: area.value.name,
+    description: area.value.description,
+    parentAreaId: newParentId || undefined
+  })
+
+  if (result.success) {
+    showMoveModal.value = false
+    // Refresh the area data to show updated parent
+    await refreshNuxtData(`area-${id}`)
   }
 }
 

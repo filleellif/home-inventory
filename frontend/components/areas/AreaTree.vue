@@ -23,6 +23,8 @@
         :key="area.id"
         :area="area"
         :level="0"
+        @move="$emit('move', $event)"
+        @delete="$emit('delete', $event)"
       />
     </ul>
   </div>
@@ -37,6 +39,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  move: [area: TreeNode]
+  delete: [id: string]
+}>()
 
 const { buildAreaTree } = useAreas()
 

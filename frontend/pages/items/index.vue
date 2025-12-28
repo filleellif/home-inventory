@@ -49,17 +49,24 @@ const filters = ref<ItemFilters>({})
 const { data: categoriesData } = await fetchCategories()
 const categories = computed(() => categoriesData.value || [])
 
-const { data: items, pending, refresh } = await fetchItems(currentPage.value, 20, filters.value)
+// Fetch items with search query from filters
+const fetchWithFilters = async () => {
+  return await fetchItems(filters.value.search || '', currentPage.value, 20)
+}
+
+const { data: items, pending, refresh } = await fetchWithFilters()
 
 // Watch for page changes
 watch(currentPage, async () => {
-  await refresh()
+  const result = await fetchWithFilters()
+  items.value = result.data.value
 })
 
 // Watch for filter changes
 watch(filters, async () => {
   currentPage.value = 1 // Reset to first page on filter change
-  await refresh()
+  const result = await fetchWithFilters()
+  items.value = result.data.value
 }, { deep: true })
 
 const handleEdit = (id: string) => {

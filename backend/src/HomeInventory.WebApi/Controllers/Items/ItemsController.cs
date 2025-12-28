@@ -19,11 +19,13 @@ public class ItemsController(
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAll([FromQuery] string searchQuery = "", [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
     {
-        logger.LogInformation("Fetching items - Page: {PageNumber}, Size: {PageSize}", pageNumber, pageSize);
+        logger.LogInformation("Fetching items - Query: {Query}, Page: {PageNumber}, Size: {PageSize}", searchQuery,
+            pageNumber, pageSize);
 
-        var (items, totalCount) = await itemQueries.GetAllAsync(pageNumber, pageSize);
+        var (items, totalCount) = await itemQueries.GetAllAsync(searchQuery, pageNumber, pageSize);
 
         return Ok(new { items, totalCount, pageNumber, pageSize });
     }

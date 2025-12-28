@@ -8,25 +8,22 @@ export const useItems = () => {
 
   // Fetch paginated items
   const fetchItems = async (
+    searchQuery = '',
     pageNumber = 1,
-    pageSize = 20,
-    filters?: ItemFilters
+    pageSize = 20
   ) => {
     const query: Record<string, any> = {
+      searchQuery,
       pageNumber,
       pageSize,
     }
 
     // Add filters to query (server-side filtering to be implemented)
-    if (filters?.search) query.search = filters.search
-    if (filters?.categoryId) query.categoryId = filters.categoryId
-    if (filters?.qrCode) query.qrCode = filters.qrCode
-
     const { data, error, pending, refresh } = await apiFetch<PaginatedList<ItemDto>>(
       '/items',
       {
         query,
-        key: `items-${pageNumber}-${pageSize}-${JSON.stringify(filters)}`
+        key: `items-${searchQuery}-${pageNumber}-${pageSize}`
       }
     )
 

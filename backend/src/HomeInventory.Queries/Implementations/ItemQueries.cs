@@ -50,11 +50,17 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
     }
 
     public async Task<(List<ItemListReadModel> Items, int TotalCount)> GetAllAsync(
+        string searchQuery,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
         var query = context.InventoryItems.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(searchQuery))
+        {
+            query = query.Where(item => EF.Functions.ILike(item.Name, $"%{searchQuery}%"));
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -78,7 +84,8 @@ public class ItemQueries(ApplicationDbContext context) : IItemQueries
         return (items, totalCount);
     }
 
-    public async Task<List<ItemListReadModel>> GetByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    public async Task<List<ItemListReadModel>> GetByCategoryAsync(Guid categoryId,
+        CancellationToken cancellationToken = default)
     {
         return await context.InventoryItems
             .AsNoTracking()
