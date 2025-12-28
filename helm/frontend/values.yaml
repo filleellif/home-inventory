@@ -3,7 +3,9 @@ replicaCount: 1
 image:
   repository: krape1987/home-inventory-frontend
   pullPolicy: IfNotPresent
-  tag: "latest"
+  # Image tag format: main-<commit-sha>
+  # Updated automatically by update-image-tags.sh script
+  tag: "main-138aca9"
 
 imagePullSecrets: []
 nameOverride: ""
