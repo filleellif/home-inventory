@@ -43,6 +43,14 @@ spec:
           value: "Production"
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
+        {{- range $idx, $policy := .Values.config.cors }}
+        - name: Cors__{{ $idx }}__Name
+          value: {{ $policy.name | quote }}
+        {{- range $originIdx, $origin := $policy.allowedOrigins }}
+        - name: Cors__{{ $idx }}__AllowedOrigins__{{ $originIdx }}
+          value: {{ $origin | quote }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_HOST
           value: {{ .Values.postgresql.name }}
