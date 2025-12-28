@@ -103,7 +103,7 @@ config:
         enabled: false
       otlp:
         enabled: true
-        endpoint: "http://otel-collector:4317"
+        endpoint: "http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4317"
 
   fileStorage:
     rootPath: "wwwroot/uploads"
