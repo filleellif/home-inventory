@@ -62,11 +62,8 @@ affinity: {}
 # Database Migration Configuration
 migration:
   enabled: true
-  # Command to run migrations - adjust based on your setup:
-  # Option 1: If you have a migration bundle: ["./efbundle"]
-  # Option 2: If using dotnet ef tools: ["dotnet", "ef", "database", "update"]
-  # Option 3: Custom command in your app: ["dotnet", "YourApp.dll", "--migrate"]
-  command: ["dotnet", "ef", "database", "update"]
+  # Using EF Core migration bundle for production deployments
+  command: ["./efbundle"]
   # Set to true if migrations are handled in application startup
   runInApp: false
 

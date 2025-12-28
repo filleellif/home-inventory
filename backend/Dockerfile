@@ -23,6 +23,11 @@ RUN dotnet build "HomeInventory.WebApi.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "HomeInventory.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
+# Generate EF Core migration bundle
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
+RUN dotnet ef migrations bundle --self-contained -r linux-x64 -o /app/efbundle
+
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
@@ -37,4 +42,7 @@ EXPOSE 8080
 EXPOSE 8081
 
 COPY --from=publish /app/publish .
+COPY --from=publish /app/efbundle .
+RUN chmod +x efbundle
+
 ENTRYPOINT ["dotnet", "HomeInventory.WebApi.dll"]
