@@ -29,7 +29,7 @@ const { data: areasData } = await fetchAreas()
 const areas = computed(() => areasData.value || [])
 
 const getIndentedName = (area: AreaDto) => {
-  // Simple indentation based on parent (can be enhanced with tree traversal)
-  return area.parentAreaId ? `  ${area.name}` : area.name
+  // Use the full path provided by the API (e.g., "storage room --> shelf 1")
+  return area.fullPath
 }
 </script>

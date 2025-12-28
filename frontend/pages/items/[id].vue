@@ -81,9 +81,19 @@ const id = route.params.id as string
 
 const { fetchItem, deleteItem } = useItems()
 const { fetchCategories } = useCategories()
+const { fetchArea } = useAreas()
 
 const { data: item, pending } = await fetchItem(id)
 const { data: categoriesData } = await fetchCategories()
+
+// Fetch area information if item has a location
+const areaData = ref(null)
+watch(() => item.value?.areaId, async (areaId) => {
+  if (areaId) {
+    const { data } = await fetchArea(areaId)
+    areaData.value = data.value
+  }
+}, { immediate: true })
 
 const categories = computed(() => categoriesData.value || [])
 
@@ -97,11 +107,11 @@ const formatDate = (date: string) => {
 }
 
 const formatLocation = (item: any) => {
-  const parts = []
-  if (item.roomName) parts.push(`Room: ${item.roomName}`)
-  if (item.shelfName) parts.push(`Shelf: ${item.shelfName}`)
-  if (item.boxName) parts.push(`Box: ${item.boxName}`)
-  return parts.length > 0 ? parts.join(' > ') : null
+  // Use the area's full path if available
+  if (areaData.value?.fullPath) {
+    return areaData.value.fullPath
+  }
+  return null
 }
 
 const handleDelete = async () => {
