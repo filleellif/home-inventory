@@ -28,6 +28,40 @@ spec:
       serviceAccountName: {{ include "home-inventory-backend.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if and .Values.migration.enabled (not .Values.migration.runInApp) }}
+      initContainers:
+      - name: db-migrations
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: {{ toJson .Values.migration.command }}
+        env:
+        {{- if .Values.postgresql.enabled }}
+        - name: POSTGRES_HOST
+          value: {{ .Values.postgresql.name }}
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.database }}
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgresql.database }}.{{ .Values.postgresql.name }}.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgresql.database }}.{{ .Values.postgresql.name }}.credentials.postgresql.acid.zalan.do
+              key: password
+        - name: Postgres__ConnectionString
+          value: "Host=$(POSTGRES_HOST);Port=$(POSTGRES_PORT);Database=$(POSTGRES_DB);Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+        {{- else }}
+        - name: Postgres__ConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "home-inventory-backend.fullname" . }}-postgres
+              key: connectionString
+        {{- end }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
         securityContext:

@@ -62,7 +62,7 @@ affinity: {}
 # Application configuration
 config:
   # Backend API URL
-  apiUrl: "https://api.inventory.kristoffer.codes"
+  apiUrl: "https://api.inventory.kristoffer.codes/api"
 
   # Public runtime config for Nuxt
   publicRuntimeConfig:
