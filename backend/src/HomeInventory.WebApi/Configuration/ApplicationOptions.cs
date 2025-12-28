@@ -5,8 +5,17 @@ namespace HomeInventory.WebApi.Configuration;
 public sealed record ApplicationOptions
 {
     public required PostgresOptions Postgres { get; init; }
-    
+
+    public required CorsOptions[] Cors { get; init; }
+
     public required OpenTelemetryOptions OpenTelemetry { get; init; }
+}
+
+public sealed record CorsOptions
+{
+    public required string Name { get; init; }
+
+    public required string[] AllowedOrigins { get; init; }
 }
 
 public sealed record OpenTelemetryOptions

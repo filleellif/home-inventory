@@ -1,22 +1,75 @@
 services:
   postgres:
     image: postgres
+    container_name: home-inventory-db
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_DB: homeinventory
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - 15432:5432
     volumes:
       - postgresdata:/var/lib/postgresql/data
+    networks:
+      - home-inventory-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: home-inventory-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Postgres__ConnectionString: "Host=postgres;Port=5432;Database=homeinventory;Username=postgres;Password=postgres"
+      Cors__0__Name: "AllowFrontend"
+      Cors__0__AllowedOrigins__0: "http://localhost:3000"
+      Cors__0__AllowedOrigins__1: "http://frontend:3000"
+      OpenTelemetry__ServiceName: "HomeInventory.API"
+      OpenTelemetry__ServiceVersion: "1.0.0"
+      OpenTelemetry__EnableLogging: true
+      OpenTelemetry__EnableTracing: true
+      OpenTelemetry__EnableMetrics: false
+      OpenTelemetry__Exporters__Console__Enabled: true
+      OpenTelemetry__Exporters__Otlp__Enabled: true
+      OpenTelemetry__Exporters__Otlp__Endpoint: "http://seq:80"
+
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - home-inventory-network
+    restart: unless-stopped
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: home-inventory-frontend
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:5001/api
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - home-inventory-network
+    restart: unless-stopped
+
   seq:
     image: datalust/seq
-    hostname: chronos-seq
+    container_name: home-inventory-seq
     ports:
       - 11001:80
     environment:
@@ -24,7 +77,13 @@ services:
       SEQ_FIRSTRUN_NOAUTHENTICATION: True
     volumes:
       - seqdata:/data
+    networks:
+      - home-inventory-network
 
 volumes:
   postgresdata:
   seqdata:
+
+networks:
+  home-inventory-network:
+    driver: bridge

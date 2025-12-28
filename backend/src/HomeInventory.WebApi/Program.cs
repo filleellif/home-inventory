@@ -16,13 +16,17 @@ builder.Services.ConfigureLogging(applicationOptions.OpenTelemetry);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    foreach (var cors in applicationOptions.Cors)
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
+        options.AddPolicy(cors.Name, policy =>
+        {
+            policy
+                .WithOrigins(cors.AllowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+    }
 });
 
 // Configure Swagger/OpenAPI
@@ -69,7 +73,10 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 // Enable CORS
-app.UseCors("AllowFrontend");
+foreach (var cors in applicationOptions.Cors)
+{
+    app.UseCors(cors.Name);
+}
 
 app.UseAuthorization();
 
