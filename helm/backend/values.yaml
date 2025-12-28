@@ -91,6 +91,7 @@ config:
       allowedOrigins:
         - "http://localhost:3000"
         - "https://localhost:3000"
+        - "https://inventory.kristoffer.codes"
 
   openTelemetry:
     serviceName: "HomeInventory.API"

@@ -25,15 +25,19 @@ service:
   port: 3000
 
 ingress:
-  enabled: false
+  enabled: true
   className: ""
-  annotations: {}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
   hosts:
-    - host: home-inventory.local
+    - host: inventory.kristoffer.codes
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  tls:
+    - secretName: inventory-kristoffer-codes-tls
+      hosts:
+        - inventory.kristoffer.codes
 
 resources:
   limits:
