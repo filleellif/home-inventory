@@ -6,6 +6,22 @@ export const useCategories = () => {
 
   // Fetch all categories (not paginated)
   const fetchCategories = async () => {
+    const { isOnline } = useOffline()
+    const { getCategories } = useOfflineStorage()
+
+    // If offline, get from IndexedDB
+    if (!isOnline.value) {
+      const categories = await getCategories()
+
+      return {
+        data: ref(categories),
+        error: ref(null),
+        pending: ref(false),
+        refresh: async () => {}
+      }
+    }
+
+    // Online - normal API fetch
     const { data, error, pending, refresh } = await apiFetch<CategoryDto[]>(
       '/categories',
       {
@@ -19,18 +35,24 @@ export const useCategories = () => {
   // Create category
   const createCategory = async (category: CreateCategoryDto) => {
     try {
-      const { data, error } = await apiFetch<{ id: string }>('/categories', {
+      const result = await apiFetch<{ id: string }>('/categories', {
         method: 'POST',
         body: category,
       })
 
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to create category')
-        return { success: false, error: error.value }
+      if (result.error?.value) {
+        toast.error(result.error.value.data?.message || 'Failed to create category')
+        return { success: false, error: result.error.value }
+      }
+
+      // Check if this was an offline operation
+      if ((result as any).offline) {
+        toast.info('Category saved offline. Will sync when online.')
+        return { success: true, data: result.data.value, offline: true }
       }
 
       toast.success('Category created successfully')
-      return { success: true, data: data.value }
+      return { success: true, data: result.data.value }
     } catch (err) {
       toast.error('Failed to create category')
       return { success: false, error: err }

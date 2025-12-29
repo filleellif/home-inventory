@@ -13,7 +13,7 @@
         <BaseTextarea
           v-model="form.description"
           label="Description"
-          rows="3"
+          :rows="3"
         />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

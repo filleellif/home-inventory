@@ -13,13 +13,42 @@ export const useItems = () => {
     pageNumber = 1,
     pageSize = 20
   ) => {
+    const { isOnline } = useOffline()
+    const { getItems } = useOfflineStorage()
+
+    // If offline, get from IndexedDB
+    if (!isOnline.value) {
+      const items = await getItems({ searchQuery, categoryId })
+
+      // Simple client-side pagination
+      const start = (pageNumber - 1) * pageSize
+      const end = start + pageSize
+      const paginatedItems = items.slice(start, end)
+
+      const paginatedResult: PaginatedList<ItemDto> = {
+        items: paginatedItems,
+        pageNumber,
+        totalPages: Math.ceil(items.length / pageSize),
+        totalCount: items.length,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: end < items.length
+      }
+
+      return {
+        data: ref(paginatedResult),
+        error: ref(null),
+        pending: ref(false),
+        refresh: async () => {}
+      }
+    }
+
+    // Online - normal API fetch
     const query: Record<string, any> = {
       searchQuery,
       pageNumber,
       pageSize,
     }
 
-    // Add categoryId to query if provided
     if (categoryId) {
       query.categoryId = categoryId
     }
@@ -38,6 +67,21 @@ export const useItems = () => {
 
   // Fetch single item
   const fetchItem = async (id: string) => {
+    const { isOnline } = useOffline()
+    const { getItem } = useOfflineStorage()
+
+    // If offline, get from IndexedDB
+    if (!isOnline.value) {
+      const item = await getItem(id)
+
+      return {
+        data: ref(item || null),
+        error: ref(item ? null : { message: 'Item not found offline' }),
+        pending: ref(false)
+      }
+    }
+
+    // Online - normal API fetch
     const { data, error, pending } = await apiFetch<ItemDto>(`/items/${id}`, {
       key: `item-${id}`
     })
@@ -60,18 +104,24 @@ export const useItems = () => {
   // Create item
   const createItem = async (item: CreateItemDto) => {
     try {
-      const { data, error } = await apiFetch<{ id: string }>('/items', {
+      const result = await apiFetch<{ id: string }>('/items', {
         method: 'POST',
         body: item,
       })
 
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to create item')
-        return { success: false, error: error.value }
+      if (result.error?.value) {
+        toast.error(result.error.value.data?.message || 'Failed to create item')
+        return { success: false, error: result.error.value }
+      }
+
+      // Check if this was an offline operation
+      if ((result as any).offline) {
+        toast.info('Item saved offline. Will sync when online.')
+        return { success: true, data: result.data.value, offline: true }
       }
 
       toast.success('Item created successfully')
-      return { success: true, data: data.value }
+      return { success: true, data: result.data.value }
     } catch (err) {
       toast.error('Failed to create item')
       return { success: false, error: err }
@@ -81,14 +131,20 @@ export const useItems = () => {
   // Update item
   const updateItem = async (id: string, item: UpdateItemDto) => {
     try {
-      const { error } = await apiFetch(`/items/${id}`, {
+      const result = await apiFetch(`/items/${id}`, {
         method: 'PUT',
         body: { ...item, id },
       })
 
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to update item')
-        return { success: false, error: error.value }
+      if (result.error?.value) {
+        toast.error(result.error.value.data?.message || 'Failed to update item')
+        return { success: false, error: result.error.value }
+      }
+
+      // Check if this was an offline operation
+      if ((result as any).offline) {
+        toast.info('Changes saved offline. Will sync when online.')
+        return { success: true, offline: true }
       }
 
       toast.success('Item updated successfully')
@@ -102,13 +158,19 @@ export const useItems = () => {
   // Delete item
   const deleteItem = async (id: string) => {
     try {
-      const { error } = await apiFetch(`/items/${id}`, {
+      const result = await apiFetch(`/items/${id}`, {
         method: 'DELETE',
       })
 
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to delete item')
-        return { success: false, error: error.value }
+      if (result.error?.value) {
+        toast.error(result.error.value.data?.message || 'Failed to delete item')
+        return { success: false, error: result.error.value }
+      }
+
+      // Check if this was an offline operation
+      if ((result as any).offline) {
+        toast.info('Item deleted offline. Will sync when online.')
+        return { success: true, offline: true }
       }
 
       toast.success('Item deleted successfully')

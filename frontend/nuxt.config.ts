@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
+    '@vite-pwa/nuxt',
   ],
 
   runtimeConfig: {
@@ -42,4 +43,90 @@ export default defineNuxtConfig({
       pathPrefix: false,
     }
   ],
+
+  // PWA configuration
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'Home Inventory',
+      short_name: 'Inventory',
+      description: 'Manage your home inventory offline',
+      theme_color: '#ffffff',
+      background_color: '#ffffff',
+      display: 'standalone',
+      start_url: '/',
+      scope: '/',
+      icons: [
+        {
+          src: '/pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any maskable'
+        },
+        {
+          src: '/pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable'
+        }
+      ]
+    },
+    workbox: {
+      navigateFallback: '/',
+      navigateFallbackDenylist: [/^\/api\//, /^\/\w+\.(js|css|json)$/],
+      cleanupOutdatedCaches: true,
+      clientsClaim: true,
+      skipWaiting: true,
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/localhost:5001\/api\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            networkTimeoutSeconds: 3,
+            expiration: {
+              maxEntries: 500,
+              maxAgeSeconds: 86400
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: ({ url }) => {
+            return url.pathname.startsWith('/_nuxt/') ||
+                   url.pathname.includes('/pages/') ||
+                   url.pathname.includes('/components/')
+          },
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'nuxt-components',
+            expiration: {
+              maxEntries: 200,
+              maxAgeSeconds: 86400
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|svg|gif|webp)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'static-assets',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 86400
+            }
+          }
+        }
+      ]
+    },
+    devOptions: {
+      enabled: true,
+      type: 'module'
+    }
+  }
 })

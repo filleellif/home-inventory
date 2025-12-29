@@ -1,5 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50">
+    <!-- Offline Indicator -->
+    <OfflineIndicator />
+
     <AppHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
     <div class="flex">
