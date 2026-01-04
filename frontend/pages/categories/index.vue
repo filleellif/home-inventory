@@ -47,6 +47,7 @@ const handleCreate = async (data: CreateCategoryDto) => {
     const result = await createCategory(data)
     if (result.success) {
       closeCreateModal()
+      // Refresh the categories list (works both online and offline)
       await refresh()
     }
   } finally {

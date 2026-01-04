@@ -52,7 +52,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
       // Show success toast
       const toast = useToast()
-      toast.success(`App ready for offline use (${items.length} items cached)`)
+      toast.success(`App ready for offline use (${areas.length} areas, ${categories.length} categories and ${items.length} items cached)`)
     } catch (error) {
       console.error('Failed to pre-cache data:', error)
       // Don't show error toast - might not be critical

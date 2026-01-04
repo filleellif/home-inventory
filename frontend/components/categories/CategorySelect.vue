@@ -26,10 +26,32 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
 const { fetchCategories, buildCategoryTree } = useCategories()
 const { data: categoriesData } = await fetchCategories()
 
-const categories = computed(() => categoriesData.value || [])
+// Flatten tree into hierarchical list (sorted by name, maintaining hierarchy)
+const categories = computed(() => {
+  if (!categoriesData.value) return []
 
-const getIndentedName = (category: CategoryDto) => {
-  // Simple indentation based on parent (can be enhanced with tree traversal)
-  return category.parentCategoryId ? `  ${category.name}` : category.name
+  const tree = buildCategoryTree(categoriesData.value)
+  const flattened: Array<CategoryDto & { fullPath: string }> = []
+
+  const flatten = (nodes: any[], parentPath = '') => {
+    nodes.forEach(node => {
+      const fullPath = parentPath ? `${parentPath} > ${node.name}` : node.name
+      flattened.push({
+        ...node,
+        fullPath
+      })
+      if (node.children?.length > 0) {
+        flatten(node.children, fullPath)
+      }
+    })
+  }
+
+  flatten(tree)
+  return flattened
+})
+
+const getIndentedName = (category: CategoryDto & { fullPath?: string }) => {
+  // Show full hierarchical path (e.g., "Electronics > Computers > Laptops")
+  return category.fullPath || category.name
 }
 </script>

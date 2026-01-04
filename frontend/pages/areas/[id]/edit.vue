@@ -15,12 +15,14 @@
 
       <h1 class="text-3xl font-bold">Edit Area</h1>
 
-      <AreaForm
-        :initial-data="area"
-        :loading="isUpdating"
-        @submit="handleSubmit"
-        @cancel="navigateTo(`/areas/${id}`)"
-      />
+      <BaseCard>
+        <AreaForm
+          :initial-data="area"
+          :loading="isUpdating"
+          @submit="handleSubmit"
+          @cancel="navigateTo(`/areas/${id}`)"
+        />
+      </BaseCard>
     </div>
 
     <div v-else class="text-center py-12">

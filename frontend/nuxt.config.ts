@@ -14,8 +14,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://localhost:5001/api'
-    }
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:5000/api'
+    },
+    // Server-side API URL (use HTTP to avoid self-signed cert issues during SSR)
+    apiBase: process.env.NUXT_API_BASE || 'http://localhost:5000/api'
   },
 
   typescript: {
@@ -77,9 +79,12 @@ export default defineNuxtConfig({
       cleanupOutdatedCaches: true,
       clientsClaim: true,
       skipWaiting: true,
+      // Precache all built assets for complete offline support
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+      globIgnores: ['**/node_modules/**/*', '**/server/**/*'],
       runtimeCaching: [
         {
-          urlPattern: /^https:\/\/localhost:5001\/api\/.*/i,
+          urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
           handler: 'NetworkFirst',
           options: {
             cacheName: 'api-cache',

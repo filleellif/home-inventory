@@ -1,10 +1,34 @@
 import { db, type SyncOperation } from '~/utils/db'
+import { nextTick } from 'vue'
 
 export const useSyncQueue = () => {
   const { isOnline } = useOffline()
   const isSyncing = useState('isSyncing', () => false)
   const pendingCount = useState('pendingSyncCount', () => 0)
   const failedCount = useState('failedSyncCount', () => 0)
+
+  // Reload all stores from IndexedDB after sync
+  // Uses nextTick to avoid reactivity issues during component rendering
+  const reloadStores = async () => {
+    // Wait for Vue to finish current render cycle
+    await nextTick()
+
+    try {
+      // Get store instances
+      const areasStore = useAreasStore()
+      const categoriesStore = useCategoriesStore()
+      const itemsStore = useItemsStore()
+
+      // Reload sequentially to avoid race conditions
+      await areasStore.reloadFromIndexedDB()
+      await categoriesStore.reloadFromIndexedDB()
+      await itemsStore.reloadFromIndexedDB()
+
+      console.log('[sync-queue] Stores reloaded after sync')
+    } catch (error) {
+      console.error('[sync-queue] Failed to reload stores:', error)
+    }
+  }
 
   // Queue an operation for syncing
   const queueOperation = async (operation: Omit<SyncOperation, 'id' | 'status' | 'retryCount'>) => {
@@ -53,6 +77,9 @@ export const useSyncQueue = () => {
       const { processMediaQueue } = useMediaQueue()
       await processMediaQueue()
 
+      // Reload stores from IndexedDB to reflect synced changes
+      await reloadStores()
+
     } catch (error) {
       console.error('Error processing sync queue:', error)
     } finally {
@@ -77,22 +104,30 @@ export const useSyncQueue = () => {
 
   // Process a single sync operation
   const processSingleOperation = async (op: SyncOperation) => {
-    console.log('Processing sync operation:', op)
+    console.log('Processing sync operation:', op.id, op.entityType, op.operation)
     try {
-      await db.syncQueue.update(op.id, { status: 'processing' })
+      // Re-read the operation from IndexedDB to get the latest payload
+      // (it may have been updated by a previous sync that replaced temp IDs)
+      const freshOp = await db.syncQueue.get(op.id)
+      if (!freshOp) {
+        console.log('Operation no longer exists, skipping:', op.id)
+        return
+      }
+
+      await db.syncQueue.update(freshOp.id, { status: 'processing' })
 
       const config = useRuntimeConfig()
       const baseURL = config.public.apiBase
 
       // Build endpoint and HTTP method
-      const { endpoint, method } = buildRequest(op)
+      const { endpoint, method } = buildRequest(freshOp)
 
-      console.log('Syncing:', method, endpoint, 'Payload:', op.payload)
+      console.log('Syncing:', method, endpoint, 'Payload:', freshOp.payload)
 
       // Make the API request
       const response = await $fetch(`${baseURL}${endpoint}`, {
         method,
-        body: op.operation === 'delete' ? undefined : op.payload,
+        body: freshOp.operation === 'delete' ? undefined : freshOp.payload,
         headers: {
           'Content-Type': 'application/json'
         }
@@ -101,14 +136,14 @@ export const useSyncQueue = () => {
       console.log('Sync response:', response)
 
       // Success! Update local entity and remove from queue
-      await handleSyncSuccess(op, response)
+      await handleSyncSuccess(freshOp, response)
 
-      console.log('Deleting from queue:', op.id)
-      await db.syncQueue.delete(op.id)
-      console.log('✓ Successfully synced and removed from queue:', op.entityType, op.entityId)
+      console.log('Deleting from queue:', freshOp.id)
+      await db.syncQueue.delete(freshOp.id)
+      console.log('✓ Successfully synced and removed from queue:', freshOp.entityType, freshOp.entityId)
 
     } catch (error: any) {
-      console.error('Sync error for operation:', op, error)
+      console.error('Sync error for operation:', op.id, error)
       await handleSyncError(op, error)
     }
   }
@@ -178,8 +213,21 @@ export const useSyncQueue = () => {
           break
       }
 
-      // If this was a temp ID, update any related entities
-      if (op.entityId.startsWith('temp_') && serverResponse.id) {
+      // If this was a temp ID, delete the old temp record and update related entities
+      if (op.entityId.startsWith('temp_') && serverResponse.id && serverResponse.id !== op.entityId) {
+        // Delete the old temp record
+        switch (op.entityType) {
+          case 'item':
+            await hardDeleteItem(op.entityId)
+            break
+          case 'area':
+            await hardDeleteArea(op.entityId)
+            break
+          case 'category':
+            await hardDeleteCategory(op.entityId)
+            break
+        }
+        // Update any related entities that reference the old temp ID
         await updateRelatedEntities(op.entityType, op.entityId, serverResponse.id)
       }
     }
@@ -219,10 +267,49 @@ export const useSyncQueue = () => {
       await db.mediaQueue.update(media.id, { entityId: newId })
     }
 
-    // Update sync queue items
+    // Update sync queue items - both entityId and payload references
     const syncItems = await db.syncQueue.where('entityId').equals(oldId).toArray()
     for (const sync of syncItems) {
       await db.syncQueue.update(sync.id, { entityId: newId })
+    }
+
+    // Update sync queue payloads that reference the old ID
+    // This handles items/areas/categories that were created with references to temp IDs
+    const allPendingSyncs = await db.syncQueue.where('status').equals('pending').toArray()
+    for (const sync of allPendingSyncs) {
+      if (!sync.payload) continue
+
+      let updated = false
+      const newPayload = { ...sync.payload }
+
+      // Update areaId references (for items)
+      if (entityType === 'area' && newPayload.areaId === oldId) {
+        newPayload.areaId = newId
+        updated = true
+      }
+
+      // Update categoryId references (for items)
+      if (entityType === 'category' && newPayload.categoryId === oldId) {
+        newPayload.categoryId = newId
+        updated = true
+      }
+
+      // Update parentAreaId references (for child areas)
+      if (entityType === 'area' && newPayload.parentAreaId === oldId) {
+        newPayload.parentAreaId = newId
+        updated = true
+      }
+
+      // Update parentCategoryId references (for child categories)
+      if (entityType === 'category' && newPayload.parentCategoryId === oldId) {
+        newPayload.parentCategoryId = newId
+        updated = true
+      }
+
+      if (updated) {
+        await db.syncQueue.update(sync.id, { payload: newPayload })
+        console.log(`[sync-queue] Updated payload reference ${oldId} -> ${newId} in operation ${sync.id}`)
+      }
     }
   }
 

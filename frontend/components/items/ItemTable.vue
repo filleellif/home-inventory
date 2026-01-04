@@ -30,9 +30,6 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Quantity
             </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Location
-            </th>
             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
@@ -53,9 +50,6 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ item.quantity }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ item.room || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button
@@ -80,11 +74,12 @@
 
 <script setup lang="ts">
 import type { ItemDto } from '~/types/item'
+import type { CategoryDto } from '~/types/category'
 
 interface Props {
   items?: ItemDto[]
   loading?: boolean
-  categories?: any[]
+  categories?: CategoryDto[]
 }
 
 const props = withDefaults(defineProps<Props>(), {

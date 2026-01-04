@@ -15,6 +15,7 @@
       </div>
       <div class="flex items-center gap-2 ml-4">
         <button
+          v-if="!area.children?.length"
           @click.stop="$emit('move', area)"
           class="text-blue-600 hover:text-blue-900 text-sm font-medium"
         >
@@ -27,6 +28,7 @@
           Edit
         </button>
         <button
+          v-if="!area.children?.length"
           @click.stop="$emit('delete', area.id)"
           class="text-red-600 hover:text-red-900 text-sm font-medium"
         >

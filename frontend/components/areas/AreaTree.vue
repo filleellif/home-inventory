@@ -9,7 +9,7 @@
       description="Get started by creating your first area"
     >
       <template #action>
-        <BaseButton @click="navigateTo('/areas/new')">
+        <BaseButton @click="$emit('create')">
           Add Area
         </BaseButton>
       </template>
@@ -40,6 +40,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
+  create: []
   move: [area: TreeNode]
   delete: [id: string]
 }>()

@@ -2,7 +2,8 @@ import type { UseFetchOptions } from 'nuxt/app'
 
 export const useApi = () => {
   const config = useRuntimeConfig()
-  const baseURL = config.public.apiBase
+  // Use server-side URL on server, public URL on client
+  const baseURL = process.server ? config.apiBase : config.public.apiBase
   const { startLoading, stopLoading } = useLoading()
   const { isOnline } = useOffline()
   const { queueOperation } = useSyncQueue()
@@ -56,27 +57,50 @@ export const useApi = () => {
     const defaultOptions: UseFetchOptions<T> = {
       baseURL,
       credentials: 'include',
-      server: baseURL.includes('localhost') ? false : true,
+      server: true,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      onRequest({ options }) {
-        const authStore = useAuthStore()
-        if (authStore.token) {
-          options.headers = {
-            ...options.headers as HeadersInit,
-            Authorization: `Bearer ${authStore.token}`
+      async onRequest({ options }) {
+        if (process.server) {
+          // On server, forward cookies from the incoming request
+          const headers = useRequestHeaders(['cookie'])
+          if (headers.cookie) {
+            options.headers = {
+              ...options.headers as HeadersInit,
+              Cookie: headers.cookie
+            }
+          }
+        } else {
+          // On client, use token from auth store
+          const authStore = useAuthStore()
+          if (authStore.token) {
+            options.headers = {
+              ...options.headers as HeadersInit,
+              Authorization: `Bearer ${authStore.token}`
+            }
           }
         }
       },
-      onResponseError({ response }) {
-        const toast = useToast()
+      onResponseError({ response, error }) {
+        // Log SSR errors to server console
+        if (process.server) {
+          console.error('[SSR] API Error:', {
+            url: response?.url,
+            status: response?.status,
+            error: error
+          })
+        }
 
-        if (response.status === 401) {
-          navigateTo('/auth/login')
-        } else if (response.status >= 500) {
-          toast.error('Server error. Please try again later.')
+        if (process.client) {
+          const toast = useToast()
+
+          if (response.status === 401) {
+            navigateTo('/auth/login')
+          } else if (response.status >= 500) {
+            toast.error('Server error. Please try again later.')
+          }
         }
       }
     }
@@ -131,7 +155,7 @@ export const useApi = () => {
     })
 
     // Update local storage optimistically
-    const { saveItem, saveArea, saveCategory, deleteItem, deleteArea, deleteCategory } = useOfflineStorage()
+    const { saveItem, saveArea, saveCategory, deleteItem, deleteArea, deleteCategory, getArea } = useOfflineStorage()
 
     if (operation === 'delete') {
       // Soft delete locally
@@ -139,14 +163,44 @@ export const useApi = () => {
       else if (entityType === 'area') await deleteArea(tempId)
       else if (entityType === 'category') await deleteCategory(tempId)
     } else {
-      // Save locally
-      const data = { id: tempId, ...options.body } as any
+      // Save locally with proper defaults
+      const now = new Date().toISOString()
+      let data = { id: tempId, ...options.body } as any
 
+      // Add required fields based on entity type
       if (entityType === 'item') {
+        data = {
+          ...data,
+          createdAt: operation === 'create' ? now : data.createdAt,
+          updatedAt: now
+        }
         await saveItem(data, false, operation === 'create')
       } else if (entityType === 'area') {
+        // Build fullPath for areas
+        let fullPath = data.name
+        if (data.parentAreaId) {
+          const parentArea = await getArea(data.parentAreaId)
+          if (parentArea) {
+            fullPath = `${parentArea.fullPath} > ${data.name}`
+            data.parentAreaName = parentArea.name
+          }
+        }
+
+        data = {
+          ...data,
+          fullPath,
+          itemCount: 0,
+          childCount: 0,
+          createdAt: operation === 'create' ? now : data.createdAt,
+          updatedAt: now
+        }
         await saveArea(data, false, operation === 'create')
       } else if (entityType === 'category') {
+        data = {
+          ...data,
+          createdAt: operation === 'create' ? now : data.createdAt,
+          updatedAt: now
+        }
         await saveCategory(data, false, operation === 'create')
       }
     }

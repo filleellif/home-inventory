@@ -1,195 +1,78 @@
 import type { AreaDto, CreateAreaDto, UpdateAreaDto, AreaTreeNode } from '~/types/area'
 
 export const useAreas = () => {
-  const { apiFetch } = useApi()
-  const toast = useToast()
+  const store = useAreasStore()
 
-  // Fetch all areas
+  // Backward-compatible wrapper for fetchAreas
   const fetchAreas = async () => {
-    const { isOnline } = useOffline()
-    const { getAreas } = useOfflineStorage()
-
-    // If offline, get from IndexedDB
-    if (!isOnline.value) {
-      const areas = await getAreas()
-
-      return {
-        data: ref(areas),
-        error: ref(null),
-        pending: ref(false),
-        refresh: async () => {}
-      }
+    // Ensure store is initialized
+    if (!store.initialized) {
+      await store.initFromIndexedDB()
     }
 
-    // Online - normal API fetch
-    const { data, error, pending, refresh } = await apiFetch<AreaDto[]>('/areas', {
-      key: 'areas'
-    })
-
-    return { data, error, pending, refresh }
+    return {
+      data: computed(() => store.allAreas),
+      error: computed(() => store.error),
+      pending: computed(() => store.loading),
+      refresh: () => store.refreshFromApi(),
+    }
   }
 
-  // Fetch single area
+  // Fetch single area by ID
   const fetchArea = async (id: string) => {
-    const { isOnline } = useOffline()
-    const { getArea } = useOfflineStorage()
-
-    // If offline, get from IndexedDB
-    if (!isOnline.value) {
-      const area = await getArea(id)
-
-      return {
-        data: ref(area || null),
-        error: ref(area ? null : { message: 'Area not found offline' }),
-        pending: ref(false)
-      }
+    // Ensure store is initialized
+    if (!store.initialized) {
+      await store.initFromIndexedDB()
     }
 
-    // Online - normal API fetch
-    const { data, error, pending } = await apiFetch<AreaDto>(`/areas/${id}`, {
-      key: `area-${id}`
-    })
-
-    return { data, error, pending }
+    return {
+      data: computed(() => store.getById(id) || null),
+      error: ref(null),
+      pending: computed(() => store.loading),
+    }
   }
 
-  // Generate new QR code
+  // Generate new QR code (delegates to API)
   const generateQrCode = async () => {
+    const toast = useToast()
     try {
-      const { data, error } = await apiFetch<{ qrCode: string }>('/items/generate-qr', {
+      const config = useRuntimeConfig()
+      const authStore = useAuthStore()
+
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+
+      if (authStore.token) {
+        headers['Authorization'] = `Bearer ${authStore.token}`
+      }
+
+      const data = await $fetch<{ qrCode: string }>('/items/generate-qr', {
+        baseURL: config.public.apiBase,
         method: 'POST',
+        headers,
+        credentials: 'include'
       })
 
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to generate QR code')
-        return { success: false, error: error.value }
-      }
-
-      return { success: true, data: data.value }
-    } catch (err) {
-      toast.error('Failed to generate QR code')
+      return { success: true, data }
+    } catch (err: any) {
+      toast.error(err.data?.message || 'Failed to generate QR code')
       return { success: false, error: err }
     }
   }
 
-  // Create area
-  const createArea = async (area: CreateAreaDto) => {
-    try {
-      const result = await apiFetch<{ id: string }>('/areas', {
-        method: 'POST',
-        body: area,
-      })
+  // Create area - delegate to store
+  const createArea = (area: CreateAreaDto) => store.create(area)
 
-      if (result.error?.value) {
-        toast.error(result.error.value.data?.message || 'Failed to create area')
-        return { success: false, error: result.error.value }
-      }
+  // Update area - delegate to store
+  const updateArea = (id: string, area: UpdateAreaDto) => store.update(id, area)
 
-      // Check if this was an offline operation
-      if ((result as any).offline) {
-        toast.info('Area saved offline. Will sync when online.')
-        refreshNuxtData('areas')
-        return { success: true, data: result.data.value, offline: true }
-      }
+  // Delete area - delegate to store
+  const deleteArea = (id: string) => store.delete(id)
 
-      // Invalidate the areas cache to ensure the list is refreshed
-      refreshNuxtData('areas')
-
-      toast.success('Area created successfully')
-      return { success: true, data: result.data.value }
-    } catch (err) {
-      toast.error('Failed to create area')
-      return { success: false, error: err }
-    }
-  }
-
-  // Update area
-  const updateArea = async (id: string, area: UpdateAreaDto) => {
-    try {
-      const result = await apiFetch(`/areas/${id}`, {
-        method: 'PUT',
-        body: { ...area, id },
-      })
-
-      if (result.error?.value) {
-        toast.error(result.error.value.data?.message || 'Failed to update area')
-        return { success: false, error: result.error.value }
-      }
-
-      // Check if this was an offline operation
-      if ((result as any).offline) {
-        toast.info('Changes saved offline. Will sync when online.')
-        refreshNuxtData('areas')
-        refreshNuxtData(`area-${id}`)
-        return { success: true, offline: true }
-      }
-
-      // Invalidate the areas cache to ensure the list is refreshed
-      refreshNuxtData('areas')
-      refreshNuxtData(`area-${id}`)
-
-      toast.success('Area updated successfully')
-      return { success: true }
-    } catch (err) {
-      toast.error('Failed to update area')
-      return { success: false, error: err }
-    }
-  }
-
-  // Delete area
-  const deleteArea = async (id: string) => {
-    try {
-      const result = await apiFetch(`/areas/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (result.error?.value) {
-        toast.error(result.error.value.data?.message || 'Failed to delete area')
-        return { success: false, error: result.error.value }
-      }
-
-      // Check if this was an offline operation
-      if ((result as any).offline) {
-        toast.info('Area deleted offline. Will sync when online.')
-        refreshNuxtData('areas')
-        return { success: true, offline: true }
-      }
-
-      // Invalidate the areas cache to ensure the list is refreshed
-      refreshNuxtData('areas')
-
-      toast.success('Area deleted successfully')
-      return { success: true }
-    } catch (err) {
-      toast.error('Failed to delete area')
-      return { success: false, error: err }
-    }
-  }
-
-  // Helper: Build area tree for hierarchical display
-  const buildAreaTree = (areas: AreaDto[]): AreaTreeNode[] => {
-    const areaMap = new Map(
-      areas.map(area => [area.id, { ...area, children: [] as AreaTreeNode[] }])
-    )
-    const rootAreas: AreaTreeNode[] = []
-
-    areas.forEach(area => {
-      const areaWithChildren = areaMap.get(area.id)!
-
-      if (area.parentAreaId) {
-        const parent = areaMap.get(area.parentAreaId)
-        if (parent) {
-          parent.children.push(areaWithChildren)
-        } else {
-          rootAreas.push(areaWithChildren)
-        }
-      } else {
-        rootAreas.push(areaWithChildren)
-      }
-    })
-
-    return rootAreas
-  }
+  // Helper: Build area tree - delegate to store
+  const buildAreaTree = (areas: AreaDto[]): AreaTreeNode[] => store.buildTree(areas)
 
   return {
     fetchAreas,
@@ -199,5 +82,7 @@ export const useAreas = () => {
     updateArea,
     deleteArea,
     buildAreaTree,
+    // Direct store access for components that want it
+    store,
   }
 }
