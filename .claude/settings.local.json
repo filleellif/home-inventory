@@ -10,7 +10,8 @@
       "Bash(dotnet remove:*)",
       "Bash(npm run type-check:*)",
       "Bash(npm run build:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

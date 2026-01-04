@@ -10,12 +10,14 @@
         <p class="mt-2 text-gray-600">Update item information</p>
       </div>
 
-      <ItemForm
-        :initial-data="item"
-        :loading="loading"
-        @submit="handleUpdate"
-        @cancel="navigateTo(`/items/${id}`)"
-      />
+      <BaseCard>
+        <ItemForm
+          :initial-data="item"
+          :loading="loading"
+          @submit="handleUpdate"
+          @cancel="navigateTo(`/items/${id}`)"
+        />
+      </BaseCard>
     </template>
 
     <div v-else class="text-center py-12">

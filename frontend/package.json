@@ -15,11 +15,14 @@
     "@heroicons/vue": "^2.1.5",
     "@pinia/nuxt": "^0.5.1",
     "@types/qrcode": "^1.5.6",
+    "@vite-pwa/nuxt": "^1.1.0",
+    "dexie": "^4.2.1",
     "html5-qrcode": "^2.3.8",
     "nuxt": "^4.2.2",
     "pinia": "^2.2.2",
     "qrcode": "^1.5.4",
-    "vue": "^3.5.26"
+    "vue": "^3.5.26",
+    "workbox-window": "^7.4.0"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",

@@ -18,8 +18,8 @@
       label="Parent Category"
       placeholder="None (Top level)"
     >
-      <option v-for="category in categories" :key="category.id" :value="category.id">
-        {{ category.name }}
+      <option v-for="category in sortedCategories" :key="category.id" :value="category.id">
+        {{ category.displayName }}
       </option>
     </BaseSelect>
 
@@ -56,6 +56,38 @@ const form = ref<CreateCategoryDto>({
 })
 
 const errors = ref<Record<string, string>>({})
+
+// Build hierarchical sorted list for dropdown
+const { buildCategoryTree } = useCategories()
+
+const sortedCategories = computed(() => {
+  if (!props.categories) return []
+
+  // Filter out current category to prevent self-reference
+  const availableCategories = props.categories.filter(
+    cat => cat.id !== props.initialData?.id
+  )
+
+  const tree = buildCategoryTree(availableCategories)
+  const flattened: Array<CategoryDto & { displayName: string }> = []
+
+  const flatten = (nodes: any[], depth = 0) => {
+    nodes.forEach(node => {
+      // Add indentation prefix based on depth
+      const prefix = '  '.repeat(depth)
+      flattened.push({
+        ...node,
+        displayName: `${prefix}${node.name}`
+      })
+      if (node.children?.length > 0) {
+        flatten(node.children, depth + 1)
+      }
+    })
+  }
+
+  flatten(tree)
+  return flattened
+})
 
 const validate = () => {
   errors.value = {}

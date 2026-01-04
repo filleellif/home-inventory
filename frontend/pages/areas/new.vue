@@ -8,7 +8,9 @@
 
     <h1 class="text-3xl font-bold">Create Area</h1>
 
-    <AreaForm :loading="isCreating" @submit="handleSubmit" @cancel="navigateTo('/areas')" />
+    <BaseCard>
+      <AreaForm :loading="isCreating" @submit="handleSubmit" @cancel="navigateTo('/areas')" />
+    </BaseCard>
   </div>
 </template>
 

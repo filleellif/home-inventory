@@ -5,7 +5,7 @@
         <h1 class="text-3xl font-bold text-gray-900">Items</h1>
         <p class="mt-2 text-gray-600">Manage your inventory items</p>
       </div>
-      <BaseButton @click="navigateTo('/items/new')">
+      <BaseButton @click="openCreateModal">
         Add Item
       </BaseButton>
     </div>
@@ -17,16 +17,16 @@
 
     <ClientOnly>
       <ItemTable
-        :items="items?.items"
-        :loading="pending"
+        :items="items.items"
+        :loading="itemsStore.loading"
         :categories="categories"
         @edit="handleEdit"
         @delete="handleDelete"
-        @create="navigateTo('/items/new')"
+        @create="openCreateModal"
       />
 
       <BasePagination
-        v-if="items && items.totalPages"
+        v-if="items.totalPages > 0"
         :current-page="items.pageNumber"
         :total-pages="items.totalPages"
         :has-previous="items.hasPreviousPage"
@@ -34,45 +34,83 @@
         @page-change="goToPage"
       />
     </ClientOnly>
+
+    <BaseModal :open="isCreateModalOpen" @close="closeCreateModal">
+      <div class="mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Create Item</h3>
+      </div>
+      <ItemForm
+        :loading="creating"
+        @submit="handleCreate"
+        @cancel="closeCreateModal"
+      />
+    </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { ItemFilters } from '~/types/api'
+import type { CreateItemDto } from '~/types/item'
 
-const { fetchItems, deleteItem } = useItems()
 const { fetchCategories } = useCategories()
-const { currentPage, goToPage } = usePagination()
+const itemsStore = useItemsStore()
 
 const filters = ref<ItemFilters>({})
+const currentPage = ref(1)
 
 const { data: categoriesData } = await fetchCategories()
 const categories = computed(() => categoriesData.value || [])
 
-// Fetch items with search query and category from filters
-const fetchWithFilters = async () => {
-  return await fetchItems(
-    filters.value.search || '',
-    filters.value.categoryId,
-    currentPage.value,
-    20
-  )
-}
-
-const { data: items, pending, refresh } = await fetchWithFilters()
-
-// Watch for page changes
-watch(currentPage, async () => {
-  const result = await fetchWithFilters()
-  items.value = result.data.value
+// Initialize store on client
+onMounted(async () => {
+  if (!itemsStore.initialized) {
+    await itemsStore.initFromIndexedDB()
+  }
 })
 
-// Watch for filter changes
-watch(filters, async () => {
-  currentPage.value = 1 // Reset to first page on filter change
-  const result = await fetchWithFilters()
-  items.value = result.data.value
+// Sync filters to store
+watch(filters, (newFilters) => {
+  itemsStore.setFilters({
+    search: newFilters.search || '',
+    categoryId: newFilters.categoryId,
+  })
+}, { deep: true, immediate: true })
+
+// Sync page to store
+watch(currentPage, (page) => {
+  itemsStore.goToPage(page)
+}, { immediate: true })
+
+// Get items from store (reactive)
+const items = computed(() => itemsStore.paginationInfo)
+
+// Go to page
+const goToPage = (page: number) => {
+  currentPage.value = page
+}
+
+// Reset to page 1 when filters change
+watch(() => filters.value, () => {
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+  }
 }, { deep: true })
+
+const { isOpen: isCreateModalOpen, open: openCreateModal, close: closeCreateModal } = useModal()
+const creating = ref(false)
+
+const handleCreate = async (data: CreateItemDto) => {
+  creating.value = true
+  try {
+    const result = await itemsStore.create(data)
+    if (result.success) {
+      closeCreateModal()
+      // No need to refresh - store is reactive
+    }
+  } finally {
+    creating.value = false
+  }
+}
 
 const handleEdit = (id: string) => {
   navigateTo(`/items/${id}/edit`)
@@ -80,10 +118,8 @@ const handleEdit = (id: string) => {
 
 const handleDelete = async (id: string) => {
   if (confirm('Are you sure you want to delete this item?')) {
-    const result = await deleteItem(id)
-    if (result.success) {
-      await refresh()
-    }
+    await itemsStore.delete(id)
+    // No need to refresh - store is reactive
   }
 }
 </script>

@@ -1,59 +1,54 @@
 <template>
   <form @submit.prevent="handleSubmit" class="space-y-6">
-    <BaseCard>
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Area Information</h3>
-      <div class="space-y-4">
-        <BaseInput
-          v-model="form.name"
-          label="Name"
-          required
-          :error="errors.name"
-          placeholder="e.g., Basement, Garage, Storage Room"
-        />
+    <BaseInput
+      v-model="form.name"
+      label="Name"
+      required
+      :error="errors.name"
+      placeholder="e.g., Basement, Garage, Storage Room"
+    />
 
-        <BaseSelect
-          v-model="form.parentAreaId"
-          label="Parent Area"
-          :disabled="loadingAreas"
-        >
-          <option :value="undefined">None (Top Level)</option>
-          <option
-            v-for="area in availableAreas"
-            :key="area.id"
-            :value="area.id"
-          >
-            {{ area.fullPath || area.name }}
-          </option>
-        </BaseSelect>
+    <BaseSelect
+      v-model="form.parentAreaId"
+      label="Parent Area"
+      :disabled="loadingAreas"
+    >
+      <option :value="undefined">None (Top Level)</option>
+      <option
+        v-for="area in sortedAreas"
+        :key="area.id"
+        :value="area.id"
+      >
+        {{ area.fullPath }}
+      </option>
+    </BaseSelect>
 
-        <BaseTextarea
-          v-model="form.description"
-          label="Description"
-          rows="3"
-          placeholder="Optional description of this area"
-        />
+    <BaseTextarea
+      v-model="form.description"
+      label="Description"
+      rows="3"
+      placeholder="Optional description of this area"
+    />
 
-        <!-- QR Code Preview (auto-generated from ID) -->
-        <div v-if="qrCodeValue" class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            QR Code (Auto-generated)
-          </label>
-          <div class="flex items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <canvas ref="qrCanvas" />
-          </div>
-          <p class="text-xs text-gray-500 text-center font-mono">{{ qrCodeValue }}</p>
-          <div class="text-center">
-            <button
-              type="button"
-              class="text-sm text-blue-600 hover:text-blue-800"
-              @click="downloadQrLabel"
-            >
-              Download QR Label
-            </button>
-          </div>
-        </div>
+    <!-- QR Code Preview (auto-generated from ID) -->
+    <div v-if="qrCodeValue" class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">
+        QR Code (Auto-generated)
+      </label>
+      <div class="flex items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <canvas ref="qrCanvas" />
       </div>
-    </BaseCard>
+      <p class="text-xs text-gray-500 text-center font-mono">{{ qrCodeValue }}</p>
+      <div class="text-center">
+        <button
+          type="button"
+          class="text-sm text-blue-600 hover:text-blue-800"
+          @click="downloadQrLabel"
+        >
+          Download QR Label
+        </button>
+      </div>
+    </div>
 
     <div class="flex justify-end gap-3">
       <BaseButton type="button" variant="secondary" @click="$emit('cancel')">
@@ -91,7 +86,7 @@ const errors = ref<Record<string, string>>({})
 const qrCanvas = ref<HTMLCanvasElement>()
 
 // Fetch all areas for parent selection
-const { fetchAreas } = useAreas()
+const { fetchAreas, buildAreaTree } = useAreas()
 const availableAreas = ref<AreaDto[]>([])
 const loadingAreas = ref(false)
 
@@ -111,6 +106,24 @@ const loadAreas = async () => {
     loadingAreas.value = false
   }
 }
+
+// Flatten tree into hierarchical list (sorted by name, maintaining hierarchy)
+const sortedAreas = computed(() => {
+  const tree = buildAreaTree(availableAreas.value)
+  const flattened: AreaDto[] = []
+
+  const flatten = (nodes: any[]) => {
+    nodes.forEach(node => {
+      flattened.push(node)
+      if (node.children?.length > 0) {
+        flatten(node.children)
+      }
+    })
+  }
+
+  flatten(tree)
+  return flattened
+})
 
 // For existing areas, use the area's ID as QR code. For new areas, we'll show it after creation.
 const qrCodeValue = computed(() => props.initialData?.id || '')

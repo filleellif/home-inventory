@@ -1,130 +1,96 @@
 import type { ItemDto, CreateItemDto, UpdateItemDto } from '~/types/item'
 import type { PaginatedList } from '~/types/pagination'
-import type { ItemFilters } from '~/types/api'
 
 export const useItems = () => {
-  const { apiFetch } = useApi()
-  const toast = useToast()
+  const store = useItemsStore()
 
-  // Fetch paginated items
+  // Get raw items data (for use with useAsyncData) - returns paginated results
+  const getItemsData = async (
+    searchQuery = '',
+    categoryId: string | undefined = undefined,
+    pageNumber = 1,
+    pageSize = 20
+  ): Promise<PaginatedList<ItemDto> | null> => {
+    // Ensure store is initialized
+    if (!store.initialized) {
+      await store.initFromIndexedDB()
+    }
+
+    // Update store filters and pagination
+    store.setFilters({ search: searchQuery, categoryId })
+    store.pagination.pageNumber = pageNumber
+    store.pagination.pageSize = pageSize
+
+    return store.paginationInfo
+  }
+
+  // Fetch paginated items - backward compatible wrapper
   const fetchItems = async (
     searchQuery = '',
     categoryId: string | undefined = undefined,
     pageNumber = 1,
     pageSize = 20
   ) => {
-    const query: Record<string, any> = {
-      searchQuery,
-      pageNumber,
-      pageSize,
+    // Ensure store is initialized
+    if (!store.initialized) {
+      await store.initFromIndexedDB()
     }
 
-    // Add categoryId to query if provided
-    if (categoryId) {
-      query.categoryId = categoryId
+    // Update store filters and pagination
+    store.setFilters({ search: searchQuery, categoryId })
+    store.pagination.pageNumber = pageNumber
+    store.pagination.pageSize = pageSize
+
+    return {
+      data: computed(() => store.paginationInfo),
+      error: computed(() => store.error),
+      pending: computed(() => store.loading),
+      refresh: () => store.refreshFromApi(),
     }
-
-    const cacheKey = `items-${searchQuery}-${categoryId || 'all'}-${pageNumber}-${pageSize}`
-    const { data, error, pending, refresh } = await apiFetch<PaginatedList<ItemDto>>(
-      '/items',
-      {
-        query,
-        key: cacheKey
-      }
-    )
-
-    return { data, error, pending, refresh }
   }
 
   // Fetch single item
   const fetchItem = async (id: string) => {
-    const { data, error, pending } = await apiFetch<ItemDto>(`/items/${id}`, {
-      key: `item-${id}`
-    })
+    // Ensure store is initialized
+    if (!store.initialized) {
+      await store.initFromIndexedDB()
+    }
 
-    return { data, error, pending }
+    return {
+      data: computed(() => store.getById(id) || null),
+      error: ref(null),
+      pending: computed(() => store.loading),
+    }
   }
 
-  // Fetch items by QR code
+  // Fetch items by QR code - delegate to store
   const fetchItemsByQrCode = async (qrCode: string) => {
-    const { data, error, pending } = await apiFetch<ItemDto[]>(
-      `/items/by-qrcode/${encodeURIComponent(qrCode)}`,
-      {
-        key: `items-qr-${qrCode}`
-      }
-    )
-
-    return { data, error, pending }
-  }
-
-  // Create item
-  const createItem = async (item: CreateItemDto) => {
-    try {
-      const { data, error } = await apiFetch<{ id: string }>('/items', {
-        method: 'POST',
-        body: item,
-      })
-
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to create item')
-        return { success: false, error: error.value }
-      }
-
-      toast.success('Item created successfully')
-      return { success: true, data: data.value }
-    } catch (err) {
-      toast.error('Failed to create item')
-      return { success: false, error: err }
+    const items = await store.fetchByQrCode(qrCode)
+    return {
+      data: ref(items),
+      error: ref(null),
+      pending: ref(false),
     }
   }
 
-  // Update item
-  const updateItem = async (id: string, item: UpdateItemDto) => {
-    try {
-      const { error } = await apiFetch(`/items/${id}`, {
-        method: 'PUT',
-        body: { ...item, id },
-      })
+  // Create item - delegate to store
+  const createItem = (item: CreateItemDto) => store.create(item)
 
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to update item')
-        return { success: false, error: error.value }
-      }
+  // Update item - delegate to store
+  const updateItem = (id: string, item: UpdateItemDto) => store.update(id, item)
 
-      toast.success('Item updated successfully')
-      return { success: true }
-    } catch (err) {
-      toast.error('Failed to update item')
-      return { success: false, error: err }
-    }
-  }
-
-  // Delete item
-  const deleteItem = async (id: string) => {
-    try {
-      const { error } = await apiFetch(`/items/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (error.value) {
-        toast.error(error.value.data?.message || 'Failed to delete item')
-        return { success: false, error: error.value }
-      }
-
-      toast.success('Item deleted successfully')
-      return { success: true }
-    } catch (err) {
-      toast.error('Failed to delete item')
-      return { success: false, error: err }
-    }
-  }
+  // Delete item - delegate to store
+  const deleteItem = (id: string) => store.delete(id)
 
   return {
+    getItemsData,
     fetchItems,
     fetchItem,
     fetchItemsByQrCode,
     createItem,
     updateItem,
     deleteItem,
+    // Direct store access for components that want it
+    store,
   }
 }

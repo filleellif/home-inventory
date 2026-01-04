@@ -5,11 +5,13 @@
       <p class="mt-2 text-gray-600">Add a new item to your inventory</p>
     </div>
 
-    <ItemForm
-      :loading="loading"
-      @submit="handleCreate"
-      @cancel="navigateTo('/items')"
-    />
+    <BaseCard>
+      <ItemForm
+        :loading="loading"
+        @submit="handleCreate"
+        @cancel="navigateTo('/items')"
+      />
+    </BaseCard>
   </div>
 </template>
 

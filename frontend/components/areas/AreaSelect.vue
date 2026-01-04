@@ -23,13 +23,31 @@ interface Props {
 defineProps<Props>()
 defineEmits<{ 'update:modelValue': [value: string] }>()
 
-const { fetchAreas } = useAreas()
+const { fetchAreas, buildAreaTree } = useAreas()
 const { data: areasData } = await fetchAreas()
 
-const areas = computed(() => areasData.value || [])
+// Flatten tree into hierarchical list (sorted by name, maintaining hierarchy)
+const areas = computed(() => {
+  if (!areasData.value) return []
+
+  const tree = buildAreaTree(areasData.value)
+  const flattened: AreaDto[] = []
+
+  const flatten = (nodes: any[]) => {
+    nodes.forEach(node => {
+      flattened.push(node)
+      if (node.children?.length > 0) {
+        flatten(node.children)
+      }
+    })
+  }
+
+  flatten(tree)
+  return flattened
+})
 
 const getIndentedName = (area: AreaDto) => {
-  // Use the full path provided by the API (e.g., "storage room --> shelf 1")
+  // Use the full path provided by the API (e.g., "Basement > Storage")
   return area.fullPath
 }
 </script>

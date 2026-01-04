@@ -1,0 +1,22 @@
+export default defineNuxtPlugin(() => {
+  // Only run on client side
+  if (process.server) return
+
+  const { initializeOfflineData } = useOfflineInit()
+  const { isOnline } = useOffline()
+
+  // Initialize offline data when online
+  if (isOnline.value) {
+    // Run in background, don't block app initialization
+    setTimeout(() => {
+      initializeOfflineData()
+    }, 1000) // Small delay to let app render first
+  }
+
+  // Watch for online status changes and initialize if needed
+  watch(isOnline, async (online) => {
+    if (online) {
+      await initializeOfflineData()
+    }
+  })
+})

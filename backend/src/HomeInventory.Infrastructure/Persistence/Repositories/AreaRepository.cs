@@ -6,18 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HomeInventory.Infrastructure.Persistence.Repositories;
 
-public class AreaRepository : IAreaRepository
+public class AreaRepository(ApplicationDbContext context) : IAreaRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public AreaRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<Area?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var model = await _context.Areas
+        var model = await context.Areas
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
@@ -27,24 +20,24 @@ public class AreaRepository : IAreaRepository
     public async Task AddAsync(Area area, CancellationToken cancellationToken = default)
     {
         var model = ToModel(area);
-        await _context.Areas.AddAsync(model, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        await context.Areas.AddAsync(model, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(Area area, CancellationToken cancellationToken = default)
     {
         var model = ToModel(area);
-        _context.Areas.Update(model);
-        await _context.SaveChangesAsync(cancellationToken);
+        context.Areas.Update(model);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Area area, CancellationToken cancellationToken = default)
     {
-        var model = await _context.Areas.FindAsync([area.Id], cancellationToken);
+        var model = await context.Areas.FirstOrDefaultAsync(a => a.Id == area.Id.Value, cancellationToken);
         if (model != null)
         {
-            _context.Areas.Remove(model);
-            await _context.SaveChangesAsync(cancellationToken);
+            context.Areas.Remove(model);
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 

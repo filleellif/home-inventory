@@ -70,7 +70,7 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // Enable CORS
 foreach (var cors in applicationOptions.Cors)
