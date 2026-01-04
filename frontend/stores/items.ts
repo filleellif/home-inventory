@@ -231,11 +231,11 @@ export const useItemsStore = defineStore('items', {
 
       const newItem: ItemRecord = {
         id: tempId,
-        name: data.name,
-        description: data.description,
-        quantity: data.quantity,
-        areaId: data.areaId,
-        categoryId: data.categoryId,
+        name: String(data.name || ''),
+        description: data.description ? String(data.description) : undefined,
+        quantity: Number(data.quantity) || 1,
+        areaId: data.areaId ? String(data.areaId) : undefined,
+        categoryId: data.categoryId ? String(data.categoryId) : undefined,
         photos: [],
         receipts: [],
         createdAt: now,
@@ -245,8 +245,8 @@ export const useItemsStore = defineStore('items', {
         _deleted: false,
       }
 
-      // Optimistically update store
-      this.items.push(newItem)
+      // Optimistically update store - use spread to ensure reactivity
+      this.items = [...this.items, newItem]
 
       // Save to IndexedDB - convert to plain object to avoid DataCloneError
       await db.items.put(JSON.parse(JSON.stringify(newItem)))
@@ -286,28 +286,32 @@ export const useItemsStore = defineStore('items', {
           credentials: 'include'
         })
 
+        // Handle different response formats (could be full object or just { id: "..." })
+        const responseData = typeof response === 'string' ? { id: response } : response
+
         // Update store with real data from server
         const idx = this.items.findIndex(i => i.id === tempId)
-        if (idx !== -1) {
-          this.items[idx] = {
-            ...response,
-            _synced: true,
-            _localOnly: false,
-            _deleted: false,
-          }
-        }
-
-        // Update IndexedDB - remove temp, add real
-        await db.items.delete(tempId)
-        await db.items.put({
-          ...response,
+        // Merge existing item data with response (in case API doesn't return all fields)
+        const existingItem = idx !== -1 ? this.items[idx] : newItem
+        const updatedItem: ItemRecord = {
+          ...existingItem,
+          ...responseData,
           _synced: true,
           _localOnly: false,
           _deleted: false,
-        })
+        }
+
+        if (idx !== -1) {
+          // Use splice for guaranteed reactivity
+          this.items.splice(idx, 1, updatedItem)
+        }
+
+        // Update IndexedDB - remove temp, add real (convert to plain object to avoid DataCloneError)
+        await db.items.delete(tempId)
+        await db.items.put(JSON.parse(JSON.stringify(updatedItem)))
 
         toast.success('Item created successfully')
-        return { success: true, id: response.id }
+        return { success: true, id: updatedItem.id }
       } catch (error: any) {
         // Rollback optimistic update
         this.items = this.items.filter(i => i.id !== tempId)
@@ -371,7 +375,7 @@ export const useItemsStore = defineStore('items', {
           headers['Authorization'] = `Bearer ${authStore.token}`
         }
 
-        const response = await $fetch<ItemDto>(`/items/${id}`, {
+        await $fetch(`/items/${id}`, {
           baseURL: config.public.apiBase,
           method: 'PUT',
           body: { ...data, id },
@@ -379,21 +383,21 @@ export const useItemsStore = defineStore('items', {
           credentials: 'include'
         })
 
-        // Update with server response
+        // API doesn't return the updated entity, just mark as synced
         this.items[idx] = {
-          ...response,
+          ...this.items[idx],
           _synced: true,
           _localOnly: false,
-          _deleted: false,
         }
-        await db.items.put(this.items[idx])
+        await db.items.put(JSON.parse(JSON.stringify(this.items[idx])))
 
         toast.success('Item updated successfully')
         return { success: true }
       } catch (error: any) {
-        // Rollback
-        this.items[idx] = oldItem
-        await db.items.put(oldItem)
+        // Rollback - ensure plain object for IndexedDB
+        const plainOldItem = JSON.parse(JSON.stringify(oldItem))
+        this.items[idx] = plainOldItem
+        await db.items.put(plainOldItem)
 
         toast.error(error.data?.message || 'Failed to update item')
         return { success: false }
@@ -461,9 +465,10 @@ export const useItemsStore = defineStore('items', {
         toast.success('Item deleted successfully')
         return { success: true }
       } catch (error: any) {
-        // Rollback
-        this.items[idx] = oldItem
-        await db.items.put(oldItem)
+        // Rollback - ensure plain object for IndexedDB
+        const plainOldItem = JSON.parse(JSON.stringify(oldItem))
+        this.items[idx] = plainOldItem
+        await db.items.put(plainOldItem)
 
         toast.error(error.data?.message || 'Failed to delete item')
         return { success: false }

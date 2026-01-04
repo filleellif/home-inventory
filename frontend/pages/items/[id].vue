@@ -6,7 +6,7 @@
 
     <div v-else-if="item" class="space-y-6">
     <nav class="text-sm text-gray-500">
-      <NuxtLink to="/items" class="hover:text-gray-700">Items</NuxtLink>
+      <NuxtLink to="/" class="hover:text-gray-700">Items</NuxtLink>
       <span class="mx-2">/</span>
       <span class="text-gray-900">{{ item.name }}</span>
     </nav>
@@ -68,7 +68,7 @@
 
     <div v-else class="text-center py-12">
       <p class="text-gray-500">Item not found</p>
-      <BaseButton class="mt-4" @click="navigateTo('/items')">
+      <BaseButton class="mt-4" @click="navigateTo('/')">
         Back to Items
       </BaseButton>
     </div>
@@ -118,7 +118,7 @@ const handleDelete = async () => {
   if (confirm('Are you sure you want to delete this item?')) {
     const result = await deleteItem(id)
     if (result.success) {
-      navigateTo('/items')
+      navigateTo('/')
     }
   }
 }

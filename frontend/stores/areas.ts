@@ -239,28 +239,24 @@ export const useAreasStore = defineStore('areas', {
           credentials: 'include'
         })
 
-        // Update store with real data from server
+        // Update store with real data from server - ensure plain object for IndexedDB
+        const createdArea: AreaRecord = {
+          ...JSON.parse(JSON.stringify(response)),
+          _synced: true,
+          _localOnly: false,
+          _deleted: false,
+        }
         const idx = this.areas.findIndex(a => a.id === tempId)
         if (idx !== -1) {
-          this.areas[idx] = {
-            ...response,
-            _synced: true,
-            _localOnly: false,
-            _deleted: false,
-          }
+          this.areas[idx] = createdArea
         }
 
         // Update IndexedDB - remove temp, add real
         await db.areas.delete(tempId)
-        await db.areas.put({
-          ...response,
-          _synced: true,
-          _localOnly: false,
-          _deleted: false,
-        })
+        await db.areas.put(createdArea)
 
         toast.success('Area created successfully')
-        return { success: true, id: response.id }
+        return { success: true, id: createdArea.id }
       } catch (error: any) {
         // Rollback optimistic update
         this.areas = this.areas.filter(a => a.id !== tempId)
@@ -335,7 +331,7 @@ export const useAreasStore = defineStore('areas', {
           headers['Authorization'] = `Bearer ${authStore.token}`
         }
 
-        const response = await $fetch<AreaDto>(`/areas/${id}`, {
+        await $fetch(`/areas/${id}`, {
           baseURL: config.public.apiBase,
           method: 'PUT',
           body: { ...data, id },
@@ -343,21 +339,21 @@ export const useAreasStore = defineStore('areas', {
           credentials: 'include'
         })
 
-        // Update with server response
+        // API doesn't return the updated entity, just mark as synced
         this.areas[idx] = {
-          ...response,
+          ...this.areas[idx],
           _synced: true,
           _localOnly: false,
-          _deleted: false,
         }
-        await db.areas.put(this.areas[idx])
+        await db.areas.put(JSON.parse(JSON.stringify(this.areas[idx])))
 
         toast.success('Area updated successfully')
         return { success: true }
       } catch (error: any) {
-        // Rollback
-        this.areas[idx] = oldArea
-        await db.areas.put(oldArea)
+        // Rollback - ensure plain object for IndexedDB
+        const plainOldArea = JSON.parse(JSON.stringify(oldArea))
+        this.areas[idx] = plainOldArea
+        await db.areas.put(plainOldArea)
 
         toast.error(error.data?.message || 'Failed to update area')
         return { success: false }
@@ -425,9 +421,10 @@ export const useAreasStore = defineStore('areas', {
         toast.success('Area deleted successfully')
         return { success: true }
       } catch (error: any) {
-        // Rollback
-        this.areas[idx] = oldArea
-        await db.areas.put(oldArea)
+        // Rollback - ensure plain object for IndexedDB
+        const plainOldArea = JSON.parse(JSON.stringify(oldArea))
+        this.areas[idx] = plainOldArea
+        await db.areas.put(plainOldArea)
 
         toast.error(error.data?.message || 'Failed to delete area')
         return { success: false }

@@ -1,14 +1,19 @@
 <template>
-  <div class="max-w-3xl mx-auto space-y-6">
+  <ClientOnly>
     <div v-if="pending" class="flex justify-center items-center h-64">
       <LoadingSpinner size="lg" />
     </div>
 
-    <template v-else-if="item">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">Edit Item</h1>
-        <p class="mt-2 text-gray-600">Update item information</p>
-      </div>
+    <div v-else-if="item" class="space-y-6">
+      <nav class="text-sm text-gray-500">
+        <NuxtLink to="/" class="hover:text-gray-700">Items</NuxtLink>
+        <span class="mx-2">/</span>
+        <NuxtLink :to="`/items/${id}`" class="hover:text-gray-700">{{ item.name }}</NuxtLink>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900">Edit</span>
+      </nav>
+
+      <h1 class="text-3xl font-bold">Edit Item</h1>
 
       <BaseCard>
         <ItemForm
@@ -18,15 +23,15 @@
           @cancel="navigateTo(`/items/${id}`)"
         />
       </BaseCard>
-    </template>
+    </div>
 
     <div v-else class="text-center py-12">
       <p class="text-gray-500">Item not found</p>
-      <BaseButton class="mt-4" @click="navigateTo('/items')">
+      <BaseButton class="mt-4" @click="navigateTo('/')">
         Back to Items
       </BaseButton>
     </div>
-  </div>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
@@ -36,19 +41,17 @@ const route = useRoute()
 const id = route.params.id as string
 
 const { fetchItem, updateItem } = useItems()
-const { data: item, pending } = await fetchItem(id)
 
+const { data: item, pending } = await fetchItem(id)
 const loading = ref(false)
 
 const handleUpdate = async (data: CreateItemDto) => {
   loading.value = true
-  try {
-    const result = await updateItem(id, { ...data, id })
-    if (result.success) {
-      navigateTo(`/items/${id}`)
-    }
-  } finally {
-    loading.value = false
+  const result = await updateItem(id, { ...data, id })
+  loading.value = false
+
+  if (result.success) {
+    navigateTo(`/items/${id}`)
   }
 }
 </script>

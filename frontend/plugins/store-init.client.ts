@@ -6,13 +6,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const categoriesStore = useCategoriesStore()
   const itemsStore = useItemsStore()
   const { isOnline } = useOffline()
-  const { stopBlockingLoading, startBlockingLoading } = useLoading()
+  const { stopBlockingLoading } = useLoading()
 
   // Blocking loading is already started by default in useLoading composable
-  // Just need to stop it when initialization completes
 
   // Initialize stores from IndexedDB immediately
   // This provides instant data even before API calls
+  let hasCache = false
   try {
     await Promise.all([
       areasStore.initFromIndexedDB(),
@@ -20,16 +20,21 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       itemsStore.initFromIndexedDB(),
     ])
     console.log('[store-init] Stores initialized from IndexedDB')
+    // Check if we have any cached data
+    hasCache = itemsStore.items.length > 0 || areasStore.areas.length > 0 || categoriesStore.categories.length > 0
   } catch (error) {
     console.error('[store-init] Failed to initialize stores:', error)
-  } finally {
+  }
+
+  // If we have cached data, stop blocking - API refresh will happen in background
+  // If no cache, keep blocking until API fetch completes
+  if (hasCache) {
     stopBlockingLoading()
   }
 
-  // If online, refresh from API in background after initial render
+  // If online, refresh from API
   if (isOnline.value) {
     setTimeout(async () => {
-      startBlockingLoading('Refreshing data...')
       try {
         await Promise.all([
           areasStore.refreshFromApi(),
@@ -40,16 +45,21 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       } catch (error) {
         console.error('[store-init] Failed to refresh stores from API:', error)
       } finally {
-        stopBlockingLoading()
+        // If we didn't have cache, now we can stop blocking
+        if (!hasCache) {
+          stopBlockingLoading()
+        }
       }
-    }, 1000)
+    }, hasCache ? 1000 : 0) // No delay if no cache - fetch immediately
+  } else if (!hasCache) {
+    // Offline with no cache - stop blocking, user will see empty state
+    stopBlockingLoading()
   }
 
-  // Re-sync when coming back online
+  // Re-sync when coming back online (background refresh, no blocking)
   watch(isOnline, async (online) => {
     if (online) {
       setTimeout(async () => {
-        startBlockingLoading('Refreshing data...')
         try {
           await Promise.all([
             areasStore.refreshFromApi(),
@@ -59,8 +69,6 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           console.log('[store-init] Stores refreshed after coming online')
         } catch (error) {
           console.error('[store-init] Failed to refresh stores after coming online:', error)
-        } finally {
-          stopBlockingLoading()
         }
       }, 2000)
     }

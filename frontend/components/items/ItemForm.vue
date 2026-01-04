@@ -86,7 +86,15 @@ const validate = () => {
 
 const handleSubmit = () => {
   if (validate()) {
-    emit('submit', form.value)
+    // Emit a plain copy to avoid reactivity issues
+    const submitData = {
+      name: form.value.name,
+      description: form.value.description,
+      quantity: form.value.quantity,
+      areaId: form.value.areaId,
+      categoryId: form.value.categoryId,
+    }
+    emit('submit', submitData)
   }
 }
 </script>

@@ -19,13 +19,10 @@
 
         <nav class="hidden md:flex items-center space-x-4">
           <NuxtLink to="/" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-            Dashboard
+            Items
           </NuxtLink>
           <NuxtLink to="/areas" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
             Areas
-          </NuxtLink>
-          <NuxtLink to="/items" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-            Items
           </NuxtLink>
           <NuxtLink to="/categories" class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
             Categories

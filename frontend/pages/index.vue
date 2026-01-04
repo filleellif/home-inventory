@@ -1,149 +1,133 @@
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-      <p class="mt-2 text-gray-600">Overview of your home inventory</p>
-    </div>
-
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <BaseCard>
-        <div class="text-sm font-medium text-gray-500">Total Items</div>
-        <div class="mt-2 text-3xl font-semibold text-primary-600">
-          {{ stats.totalItems }}
-        </div>
-      </BaseCard>
-
-      <BaseCard>
-        <div class="text-sm font-medium text-gray-500">Categories</div>
-        <div class="mt-2 text-3xl font-semibold text-primary-600">
-          {{ stats.totalCategories }}
-        </div>
-      </BaseCard>
-
-      <BaseCard>
-        <div class="text-sm font-medium text-gray-500">Last Updated</div>
-        <div class="mt-2 text-lg font-semibold text-primary-600">
-          {{ stats.lastUpdated }}
-        </div>
-      </BaseCard>
-    </div>
-
-    <div>
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-900">Recent Items</h2>
-        <NuxtLink to="/items" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-          View all →
-        </NuxtLink>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Items</h1>
+        <p class="mt-2 text-gray-600">Manage your inventory items</p>
       </div>
-
-      <ClientOnly>
-        <div v-if="pending" class="flex justify-center items-center h-32">
-          <LoadingSpinner size="lg" />
-        </div>
-
-        <div v-else-if="recentItems.length === 0">
-          <EmptyState
-            title="No items yet"
-            description="Get started by adding your first item"
-          >
-            <template #action>
-              <BaseButton @click="navigateTo('/items/new')">
-                Add Item
-              </BaseButton>
-            </template>
-          </EmptyState>
-        </div>
-
-        <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <BaseCard
-            v-for="item in recentItems"
-            :key="item.id"
-            class="hover:shadow-md transition-shadow cursor-pointer"
-            @click="navigateTo(`/items/${item.id}`)"
-          >
-            <h3 class="font-medium text-gray-900">{{ item.name }}</h3>
-            <p v-if="item.description" class="mt-1 text-sm text-gray-500 line-clamp-2">
-              {{ item.description }}
-            </p>
-            <div class="mt-3 flex items-center justify-between text-sm">
-              <span class="text-gray-500">Qty: {{ item.quantity }}</span>
-            </div>
-          </BaseCard>
-        </div>
-      </ClientOnly>
+      <BaseButton @click="openCreateModal">
+        Add Item
+      </BaseButton>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <BaseCard>
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div class="space-y-2">
-          <BaseButton class="w-full" @click="navigateTo('/items/new')">
-            Add New Item
-          </BaseButton>
-          <BaseButton class="w-full" variant="secondary" @click="navigateTo('/items')">
-            Browse All Items
-          </BaseButton>
-          <BaseButton class="w-full" variant="secondary" @click="navigateTo('/categories')">
-            Manage Categories
-          </BaseButton>
-        </div>
-      </BaseCard>
+    <ItemFilters
+      v-model:filters="filters"
+      :categories="categories"
+    />
 
-      <BaseCard>
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
-        <div v-if="categories.length === 0" class="text-center text-gray-500 py-4">
-          No categories yet
-        </div>
-        <ul v-else class="space-y-2">
-          <li
-            v-for="category in categories.slice(0, 5)"
-            :key="category.id"
-            class="flex items-center justify-between text-sm"
-          >
-            <span class="text-gray-700">{{ category.name }}</span>
-            <span class="text-gray-500">{{ getItemCountForCategory(category.id) }} items</span>
-          </li>
-        </ul>
-        <NuxtLink
-          v-if="categories.length > 5"
-          to="/categories"
-          class="mt-4 block text-center text-primary-600 hover:text-primary-700 text-sm font-medium"
-        >
-          View all categories →
-        </NuxtLink>
-      </BaseCard>
-    </div>
+    <ClientOnly>
+      <ItemTable
+        :items="items.items"
+        :loading="itemsStore.loading"
+        :categories="categories"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @create="openCreateModal"
+      />
+
+      <BasePagination
+        v-if="items.totalPages > 0"
+        :current-page="items.pageNumber"
+        :total-pages="items.totalPages"
+        :has-previous="items.hasPreviousPage"
+        :has-next="items.hasNextPage"
+        @page-change="goToPage"
+      />
+    </ClientOnly>
+
+    <BaseModal :open="isCreateModalOpen" @close="closeCreateModal">
+      <div class="mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Create Item</h3>
+      </div>
+      <ItemForm
+        :loading="creating"
+        @submit="handleCreate"
+        @cancel="closeCreateModal"
+      />
+    </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
-const { fetchItems } = useItems()
+import type { ItemFilters } from '~/types/api'
+import type { CreateItemDto } from '~/types/item'
+
 const { fetchCategories } = useCategories()
+const itemsStore = useItemsStore()
 
-const { data: itemsData, pending } = await fetchItems('', undefined, 1, 6)
+const filters = ref<ItemFilters>({})
+const currentPage = ref(1)
+
 const { data: categoriesData } = await fetchCategories()
-
-const recentItems = computed(() => itemsData.value?.items || [])
 const categories = computed(() => categoriesData.value || [])
 
-const stats = computed(() => {
-  const items = itemsData.value?.items || []
-  const totalItems = itemsData.value?.totalCount || 0
-  const totalCategories = categories.value.length
-  const lastUpdated = items.length > 0
-    ? new Date(Math.max(...items.map(i => new Date(i.updatedAt).getTime()))).toLocaleDateString()
-    : 'N/A'
-
-  return {
-    totalItems,
-    totalCategories,
-    lastUpdated
+// Initialize store on client
+onMounted(async () => {
+  if (!itemsStore.initialized) {
+    await itemsStore.initFromIndexedDB()
   }
 })
 
-const getItemCountForCategory = (categoryId: string) => {
-  // This is a simplified version - in a real app, you'd want to fetch this from the API
-  const items = itemsData.value?.items || []
-  return items.filter(item => item.categoryId === categoryId).length
+// Sync filters to store
+watch(filters, (newFilters) => {
+  itemsStore.setFilters({
+    search: newFilters.search || '',
+    categoryId: newFilters.categoryId,
+  })
+}, { deep: true, immediate: true })
+
+// Sync page to store
+watch(currentPage, (page) => {
+  itemsStore.goToPage(page)
+}, { immediate: true })
+
+// Get items from store (reactive)
+const items = computed(() => itemsStore.paginationInfo)
+
+// Go to page
+const goToPage = (page: number) => {
+  currentPage.value = page
+}
+
+// Reset to page 1 when filters change
+watch(() => filters.value, () => {
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+  }
+}, { deep: true })
+
+const { isOpen: isCreateModalOpen, open: openCreateModal, close: closeCreateModal } = useModal()
+const creating = ref(false)
+
+const handleCreate = async (data: CreateItemDto) => {
+  creating.value = true
+  try {
+    // Create a plain copy of the data to avoid reactivity issues
+    const plainData: CreateItemDto = {
+      name: data.name,
+      description: data.description,
+      quantity: data.quantity,
+      areaId: data.areaId,
+      categoryId: data.categoryId,
+    }
+    const result = await itemsStore.create(plainData)
+    if (result.success) {
+      closeCreateModal()
+      // No need to refresh - store is reactive
+    }
+  } finally {
+    creating.value = false
+  }
+}
+
+const handleEdit = (id: string) => {
+  navigateTo(`/items/${id}/edit`)
+}
+
+const handleDelete = async (id: string) => {
+  if (confirm('Are you sure you want to delete this item?')) {
+    await itemsStore.delete(id)
+    // No need to refresh - store is reactive
+  }
 }
 </script>

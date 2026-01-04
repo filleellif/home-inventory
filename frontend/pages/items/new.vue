@@ -9,7 +9,7 @@
       <ItemForm
         :loading="loading"
         @submit="handleCreate"
-        @cancel="navigateTo('/items')"
+        @cancel="navigateTo('/')"
       />
     </BaseCard>
   </div>
