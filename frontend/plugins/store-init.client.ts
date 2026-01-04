@@ -6,6 +6,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const categoriesStore = useCategoriesStore()
   const itemsStore = useItemsStore()
   const { isOnline } = useOffline()
+  const { stopBlockingLoading, startBlockingLoading } = useLoading()
+
+  // Blocking loading is already started by default in useLoading composable
+  // Just need to stop it when initialization completes
 
   // Initialize stores from IndexedDB immediately
   // This provides instant data even before API calls
@@ -18,11 +22,14 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     console.log('[store-init] Stores initialized from IndexedDB')
   } catch (error) {
     console.error('[store-init] Failed to initialize stores:', error)
+  } finally {
+    stopBlockingLoading()
   }
 
   // If online, refresh from API in background after initial render
   if (isOnline.value) {
     setTimeout(async () => {
+      startBlockingLoading('Refreshing data...')
       try {
         await Promise.all([
           areasStore.refreshFromApi(),
@@ -32,6 +39,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         console.log('[store-init] Stores refreshed from API')
       } catch (error) {
         console.error('[store-init] Failed to refresh stores from API:', error)
+      } finally {
+        stopBlockingLoading()
       }
     }, 1000)
   }
@@ -40,6 +49,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   watch(isOnline, async (online) => {
     if (online) {
       setTimeout(async () => {
+        startBlockingLoading('Refreshing data...')
         try {
           await Promise.all([
             areasStore.refreshFromApi(),
@@ -49,6 +59,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           console.log('[store-init] Stores refreshed after coming online')
         } catch (error) {
           console.error('[store-init] Failed to refresh stores after coming online:', error)
+        } finally {
+          stopBlockingLoading()
         }
       }, 2000)
     }
