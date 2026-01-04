@@ -5,7 +5,7 @@ image:
   pullPolicy: IfNotPresent
   # Image tag format: main-<commit-sha>
   # Updated automatically by update-image-tags.sh script
-  tag: "main-b133c1a"
+  tag: "main-1dace26"
 
 imagePullSecrets: []
 nameOverride: ""
